@@ -23,6 +23,11 @@ export function formatDate(year: number, month: number, day: number): string {
   return `${year}-${m}-${d}`;
 }
 
+export function getTodayDateString(): string {
+  const now = new Date();
+  return formatDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
 export function parseDateString(dateStr: string): { year: number; month: number; day: number } {
   const [y, m, d] = dateStr.split('-').map(Number);
   return { year: y, month: m, day: d };
@@ -75,11 +80,13 @@ export function isBillScheduled(bill: StaticBill, dayNumber: number, daysInMonth
 export function calculateDailyForecast(
   config: BudgetConfig,
   targetYear: number,
-  targetMonth: number
+  targetMonth: number,
+  currentDateStr?: string
 ): MonthlyForecastSummary {
   const { account, incomes, bills, creditCards, autoDeposits, transactions = [] } = config;
   const asOf = account.asOfDate;
   const asOfParts = parseDateString(asOf);
+  const todayStr = currentDateStr || getTodayDateString();
 
   const asOfDateObj = new Date(asOf + 'T00:00:00');
   const targetMonthStartObj = new Date(targetYear, targetMonth - 1, 1);
@@ -356,8 +363,8 @@ export function calculateDailyForecast(
     const dateStr = formatDate(targetYear, targetMonth, day);
     const dateObj = new Date(targetYear, targetMonth - 1, day);
     const dayOfWeek = DAYS_OF_WEEK[dateObj.getDay()];
-    const isToday = dateStr === asOf;
-    const isPast = dateStr < asOf;
+    const isToday = dateStr === todayStr;
+    const isPast = dateStr < todayStr;
 
     const { inflows, outflows, netChange } = getDayTransactions(targetYear, targetMonth, day);
 

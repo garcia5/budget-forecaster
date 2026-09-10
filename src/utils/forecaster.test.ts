@@ -384,7 +384,7 @@ describe('Forecaster Engine', () => {
       autoDeposits: [],
     };
 
-    const summary = calculateDailyForecast(configMidMonth, 2026, 3);
+    const summary = calculateDailyForecast(configMidMonth, 2026, 3, '2026-03-15');
 
     // Lowest balance must strictly be evaluated from March 15 and forward
     expect(summary.lowestBalanceDate >= '2026-03-15').toBe(true);
@@ -429,5 +429,39 @@ describe('Forecaster Engine', () => {
     expect(autopayOutflow).toBeDefined();
     expect(autopayOutflow?.amount).toBe(800);
   });
+
+  it('correctly sets isToday and isPast relative to the current date even when asOfDate is yesterday', () => {
+    // asOfDate is 2026-09-08 (yesterday), current date is 2026-09-09 (today)
+    const configWithYesterdayAsOf: BudgetConfig = {
+      ...baseConfig,
+      account: {
+        currentCheckingBalance: 3000,
+        asOfDate: '2026-09-08',
+        safeBufferAmount: 500,
+      },
+      bills: [],
+      creditCards: [],
+      autoDeposits: [],
+    };
+
+    const summary = calculateDailyForecast(configWithYesterdayAsOf, 2026, 9, '2026-09-09');
+
+    const day8 = summary.days.find(d => d.date === '2026-09-08');
+    const day9 = summary.days.find(d => d.date === '2026-09-09');
+    const day10 = summary.days.find(d => d.date === '2026-09-10');
+
+    // Day 8 (yesterday): isPast is true, isToday is false
+    expect(day8?.isToday).toBe(false);
+    expect(day8?.isPast).toBe(true);
+
+    // Day 9 (today): isToday is true, isPast is false
+    expect(day9?.isToday).toBe(true);
+    expect(day9?.isPast).toBe(false);
+
+    // Day 10 (tomorrow): isToday is false, isPast is false
+    expect(day10?.isToday).toBe(false);
+    expect(day10?.isPast).toBe(false);
+  });
 });
+
 

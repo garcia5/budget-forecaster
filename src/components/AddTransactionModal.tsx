@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { BudgetConfig, AccountType, AccountTransaction, CreditCardExtraPayment } from '../types/budget';
+import { getTodayDateString } from '../utils/forecaster';
 import {
   X,
   DollarSign,
@@ -79,7 +80,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [name, setName] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [date, setDate] = useState<string>(
-    initialDate || config.account.asOfDate || new Date().toISOString().slice(0, 10)
+    initialDate || getTodayDateString()
   );
   const [category, setCategory] = useState<string>('Groceries');
   const [note, setNote] = useState<string>('');
@@ -90,10 +91,17 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   );
   const [paydownAmount, setPaydownAmount] = useState<string>('');
   const [paydownDate, setPaydownDate] = useState<string>(
-    initialDate || config.account.asOfDate || new Date().toISOString().slice(0, 10)
+    initialDate || getTodayDateString()
   );
   const [paydownNote, setPaydownNote] = useState<string>('');
   const [reducesAutopay, setReducesAutopay] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setDate(initialDate || getTodayDateString());
+      setPaydownDate(initialDate || getTodayDateString());
+    }
+  }, [isOpen, initialDate]);
 
   if (!isOpen) return null;
 

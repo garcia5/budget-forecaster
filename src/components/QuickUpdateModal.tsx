@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, DollarSign, CreditCard, Check } from 'lucide-react';
 import type { BudgetConfig } from '../types/budget';
+import { getTodayDateString } from '../utils/forecaster';
 
 interface QuickUpdateModalProps {
   isOpen: boolean;
@@ -140,9 +141,18 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                    As of Date
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-medium text-slate-300">
+                      As of Date
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setAsOfDate(getTodayDateString())}
+                      className="text-[11px] text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                    >
+                      Set to Today
+                    </button>
+                  </div>
                   <input
                     type="date"
                     required

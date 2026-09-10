@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { BudgetConfig, AccountTransaction, CreditCardExtraPayment } from './types/budget';
 import { loadBudgetConfig, saveBudgetConfig, loadBudgetConfigFromDisk } from './utils/storage';
-import { calculateDailyForecast, parseDateString } from './utils/forecaster';
+import { calculateDailyForecast } from './utils/forecaster';
 import { Header } from './components/Header';
 import { DailyBalanceChart } from './components/DailyBalanceChart';
 import { CalendarView } from './components/CalendarView';
@@ -21,17 +21,13 @@ export function App() {
     });
   }, []);
 
-  // Initialize selected month/year based on account asOfDate or current date
-  const initialDateParts = useMemo(() => {
-    return parseDateString(config.account.asOfDate);
-  }, [config.account.asOfDate]);
-
+  // Initialize selected month/year based on current date
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     try {
       const saved = sessionStorage.getItem('budget_selected_year');
       if (saved) return parseInt(saved, 10);
     } catch {}
-    return initialDateParts.year;
+    return new Date().getFullYear();
   });
 
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
@@ -39,7 +35,7 @@ export function App() {
       const saved = sessionStorage.getItem('budget_selected_month');
       if (saved) return parseInt(saved, 10);
     } catch {}
-    return initialDateParts.month;
+    return new Date().getMonth() + 1;
   });
 
   useEffect(() => {

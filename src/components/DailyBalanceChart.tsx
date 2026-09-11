@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   AreaChart,
   Area,
@@ -8,8 +8,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   ReferenceArea,
-} from 'recharts';
-import type { MonthlyForecastSummary } from '../types/budget';
+} from "recharts";
+import type { MonthlyForecastSummary } from "../types/budget";
 
 interface DailyBalanceChartProps {
   summary: MonthlyForecastSummary;
@@ -17,7 +17,11 @@ interface DailyBalanceChartProps {
 }
 
 const formatCurrency = (val: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(val);
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -26,15 +30,15 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-xl text-xs max-w-xs space-y-2">
         <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
           <span className="font-semibold text-slate-200 pr-5">
-            {data.date} {data.isToday ? '(Today)' : data.isPast ? '(Past)' : ''}
+            {data.date} {data.isToday ? "(Today)" : data.isPast ? "(Past)" : ""}
           </span>
           <span
             className={`text-sm font-bold ${
               data.balance < 0
-                ? 'text-rose-400'
+                ? "text-rose-400"
                 : data.isPast
-                ? 'text-slate-400 font-semibold'
-                : 'text-emerald-400'
+                  ? "text-slate-400 font-semibold"
+                  : "text-emerald-400"
             }`}
           >
             {formatCurrency(data.balance)}
@@ -46,13 +50,13 @@ const CustomTooltip = ({ active, payload }: any) => {
           <span
             className={`font-semibold ${
               data.netDailyChange > 0
-                ? 'text-emerald-400'
+                ? "text-emerald-400"
                 : data.netDailyChange < 0
-                ? 'text-rose-400'
-                : 'text-slate-400'
+                  ? "text-rose-400"
+                  : "text-slate-400"
             }`}
           >
-            {data.netDailyChange > 0 ? '+' : ''}
+            {data.netDailyChange > 0 ? "+" : ""}
             {formatCurrency(data.netDailyChange)}
           </span>
         </div>
@@ -75,9 +79,11 @@ const CustomTooltip = ({ active, payload }: any) => {
             {data.outflows.map((o: any) => (
               <div key={o.id} className="flex justify-between text-[11px] text-slate-300">
                 <span className="truncate pr-2">
-                  {o.name} {o.isSkipped ? '(Skipped)' : ''}
+                  {o.name} {o.isSkipped ? "(Skipped)" : ""}
                 </span>
-                <span className={`font-medium ${o.isSkipped ? 'line-through text-slate-500' : 'text-rose-400'}`}>
+                <span
+                  className={`font-medium ${o.isSkipped ? "line-through text-slate-500" : "text-rose-400"}`}
+                >
                   -{formatCurrency(o.amount)}
                 </span>
               </div>
@@ -105,19 +111,19 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
     netDailyChange: d.netDailyChange,
   }));
 
-  const activeChartDays = chartData.filter(d => !d.isPast);
+  const activeChartDays = chartData.filter((d) => !d.isPast);
   const evaluationChartDays = activeChartDays.length > 0 ? activeChartDays : chartData;
-  const minBalance = Math.min(...evaluationChartDays.map(d => d.balance), safeBufferAmount);
-  const maxBalance = Math.max(...evaluationChartDays.map(d => d.balance), safeBufferAmount);
+  const minBalance = Math.min(...evaluationChartDays.map((d) => d.balance), safeBufferAmount);
+  const maxBalance = Math.max(...evaluationChartDays.map((d) => d.balance), safeBufferAmount);
   const yDomainMin = Math.floor(Math.min(0, minBalance) / 500) * 500;
   const yDomainMax = Math.ceil(maxBalance / 500) * 500 + 500;
 
-  const pastDays = chartData.filter(d => d.isPast);
+  const pastDays = chartData.filter((d) => d.isPast);
   const hasPast = pastDays.length > 0;
   const allPast = chartData.length > 0 && pastDays.length === chartData.length;
   const firstDay = chartData[0]?.day;
   const lastDay = chartData[chartData.length - 1]?.day;
-  const currentDayItem = chartData.find(d => !d.isPast);
+  const currentDayItem = chartData.find((d) => !d.isPast);
   const currentDay = currentDayItem?.day;
 
   // Percentage of width where past region transitions to current/future
@@ -125,8 +131,11 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
     ? allPast
       ? 100
       : chartData.length > 1 && currentDayItem
-      ? Math.max(0, Math.min(100, (chartData.indexOf(currentDayItem) / (chartData.length - 1)) * 100))
-      : 0
+        ? Math.max(
+            0,
+            Math.min(100, (chartData.indexOf(currentDayItem) / (chartData.length - 1)) * 100),
+          )
+        : 0
     : 0;
 
   return (
@@ -148,7 +157,7 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 border-b-2 border-amber-400 border-dashed inline-block" />
-            <span>Safe Buffer (${safeBufferAmount.toLocaleString('en-US')})</span>
+            <span>Safe Buffer (${safeBufferAmount.toLocaleString("en-US")})</span>
           </div>
         </div>
       </div>
@@ -179,8 +188,12 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
               </linearGradient>
 
               <linearGradient id="balanceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="5%" stopColor={allPast ? '#64748b' : '#10b981'} stopOpacity={allPast ? 0.12 : 0.35} />
-                <stop offset="95%" stopColor={allPast ? '#64748b' : '#10b981'} stopOpacity={0.0} />
+                <stop
+                  offset="5%"
+                  stopColor={allPast ? "#64748b" : "#10b981"}
+                  stopOpacity={allPast ? 0.12 : 0.35}
+                />
+                <stop offset="95%" stopColor={allPast ? "#64748b" : "#10b981"} stopOpacity={0.0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -188,7 +201,7 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
               stroke="#64748b"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: '#334155' }}
+              axisLine={{ stroke: "#334155" }}
               tickFormatter={(day) => `${day}`}
             />
             <YAxis
@@ -196,7 +209,7 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
               stroke="#64748b"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: '#334155' }}
+              axisLine={{ stroke: "#334155" }}
               tickFormatter={(val) => `$${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k`}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -227,7 +240,7 @@ export const DailyBalanceChart: React.FC<DailyBalanceChartProps> = ({
                 stroke="#334155"
                 strokeOpacity={0.3}
                 strokeDasharray="3 3"
-                style={{ pointerEvents: 'none' }}
+                style={{ pointerEvents: "none" }}
               />
             )}
 

@@ -1,11 +1,11 @@
-import type { BudgetConfig } from '../types/budget';
-import { getDefaultBudgetData } from './defaultData';
+import type { BudgetConfig } from "../types/budget";
+import { getDefaultBudgetData } from "./defaultData";
 
-const STORAGE_KEY = 'budget_forecaster_config_v1';
+const STORAGE_KEY = "budget_forecaster_config_v1";
 
-export type SyncStatus = 'synced' | 'syncing' | 'error';
+export type SyncStatus = "synced" | "syncing" | "error";
 
-let currentSyncStatus: SyncStatus = 'synced';
+let currentSyncStatus: SyncStatus = "synced";
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingDiskPayload: BudgetConfig | null = null;
 const syncStatusListeners: Set<(status: SyncStatus) => void> = new Set();
@@ -24,11 +24,11 @@ export function subscribeSyncStatus(listener: (status: SyncStatus) => void): () 
 
 function notifySyncStatus(status: SyncStatus): void {
   currentSyncStatus = status;
-  syncStatusListeners.forEach(listener => {
+  syncStatusListeners.forEach((listener) => {
     try {
       listener(status);
     } catch (e) {
-      console.error('Error in sync status listener:', e);
+      console.error("Error in sync status listener:", e);
     }
   });
 }
@@ -63,17 +63,17 @@ export function loadBudgetConfig(): BudgetConfig {
     const parsed = JSON.parse(raw);
     return normalizeConfig(parsed);
   } catch (err) {
-    console.error('Failed to load budget configuration from localStorage:', err);
+    console.error("Failed to load budget configuration from localStorage:", err);
     return getDefaultBudgetData();
   }
 }
 
 export async function loadBudgetConfigFromDisk(): Promise<BudgetConfig> {
   try {
-    const response = await fetch('/api/budget-config');
+    const response = await fetch("/api/budget-config");
     if (response.ok) {
       const data = await response.json();
-      if (data && typeof data === 'object' && (data.account || data.incomes)) {
+      if (data && typeof data === "object" && (data.account || data.incomes)) {
         const normalized = normalizeConfig(data);
         // Sync to localStorage cache
         try {
@@ -81,12 +81,12 @@ export async function loadBudgetConfigFromDisk(): Promise<BudgetConfig> {
         } catch {
           // ignore localstorage quota errors
         }
-        notifySyncStatus('synced');
+        notifySyncStatus("synced");
         return normalized;
       }
     }
   } catch (err) {
-    console.info('Disk API not reachable; falling back to browser storage:', err);
+    console.info("Disk API not reachable; falling back to browser storage:", err);
   }
   return loadBudgetConfig();
 }
@@ -101,30 +101,30 @@ export async function flushPendingDiskSave(): Promise<boolean> {
   }
 
   if (!pendingDiskPayload) {
-    notifySyncStatus('synced');
+    notifySyncStatus("synced");
     return true;
   }
 
   const payload = pendingDiskPayload;
   pendingDiskPayload = null;
-  notifySyncStatus('syncing');
+  notifySyncStatus("syncing");
 
   try {
-    const res = await fetch('/api/budget-config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/budget-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload, null, 2),
     });
     if (res.ok) {
-      notifySyncStatus('synced');
+      notifySyncStatus("synced");
       return true;
     } else {
-      notifySyncStatus('error');
+      notifySyncStatus("error");
       return false;
     }
   } catch (err) {
-    console.warn('Disk auto-flush error:', err);
-    notifySyncStatus('error');
+    console.warn("Disk auto-flush error:", err);
+    notifySyncStatus("error");
     return false;
   }
 }
@@ -138,12 +138,12 @@ export function saveBudgetConfig(config: BudgetConfig): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config, null, 2));
   } catch (err) {
-    console.error('Failed to save budget configuration to localStorage:', err);
+    console.error("Failed to save budget configuration to localStorage:", err);
   }
 
   // 2. Queue debounced disk flush
   pendingDiskPayload = config;
-  notifySyncStatus('syncing');
+  notifySyncStatus("syncing");
 
   if (debounceTimer) {
     clearTimeout(debounceTimer);
@@ -160,22 +160,22 @@ export async function saveBudgetConfigToDisk(config: BudgetConfig): Promise<bool
 }
 
 // Emergency flush on tab close/refresh
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
     if (pendingDiskPayload) {
       const blob = new Blob([JSON.stringify(pendingDiskPayload, null, 2)], {
-        type: 'application/json',
+        type: "application/json",
       });
-      navigator.sendBeacon('/api/budget-config', blob);
+      navigator.sendBeacon("/api/budget-config", blob);
     }
   });
 }
 
 export function exportConfigAsJson(config: BudgetConfig): void {
   const jsonStr = JSON.stringify(config, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = `budget-forecast-backup-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
@@ -190,14 +190,14 @@ export function importConfigFromJson(file: File): Promise<BudgetConfig> {
         const text = e.target?.result as string;
         const parsed = JSON.parse(text) as BudgetConfig;
         if (!parsed.account || !Array.isArray(parsed.incomes)) {
-          throw new Error('Invalid budget configuration JSON structure');
+          throw new Error("Invalid budget configuration JSON structure");
         }
         resolve(normalizeConfig(parsed));
       } catch (err) {
         reject(err);
       }
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsText(file);
   });
 }

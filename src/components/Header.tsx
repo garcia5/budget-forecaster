@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,9 +14,9 @@ import {
   HardDrive,
   RefreshCw,
   AlertCircle,
-} from 'lucide-react';
-import type { BudgetConfig, MonthlyForecastSummary } from '../types/budget';
-import { subscribeSyncStatus, type SyncStatus } from '../utils/storage';
+} from "lucide-react";
+import type { BudgetConfig, MonthlyForecastSummary } from "../types/budget";
+import { subscribeSyncStatus, type SyncStatus } from "../utils/storage";
 
 interface HeaderProps {
   config: BudgetConfig;
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddTransaction,
   onOpenConfig,
 }) => {
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced');
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("synced");
 
   useEffect(() => {
     return subscribeSyncStatus(setSyncStatus);
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isWarning = !isDanger && summary.lowestProjectedBalance < config.account.safeBufferAmount;
 
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
   return (
     <header className="space-y-5">
@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white m-0">
                 Budget Forecaster
               </h1>
-              {syncStatus === 'synced' && (
+              {syncStatus === "synced" && (
                 <span
                   className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-medium bg-slate-900 border border-slate-800 text-emerald-400 px-2 py-0.5 rounded-md transition-all"
                   title="Every edit is automatically debounced & flushed to budget-data.json on disk"
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <HardDrive className="w-3 h-3 text-emerald-400" />
                 </span>
               )}
-              {syncStatus === 'syncing' && (
+              {syncStatus === "syncing" && (
                 <span
                   className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-medium bg-amber-950/40 border border-amber-800/60 text-amber-300 px-2 py-0.5 rounded-md transition-all animate-pulse"
                   title="Flushing edits to budget-data.json on disk..."
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
                 </span>
               )}
-              {syncStatus === 'error' && (
+              {syncStatus === "error" && (
                 <span
                   className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-medium bg-rose-950/40 border border-rose-800/60 text-rose-300 px-2 py-0.5 rounded-md transition-all"
                   title="Disk write error; changes safely saved in browser"
@@ -170,7 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
             <span>Target buffer:</span>
-            <span className="font-semibold text-slate-300">{formatMoney(config.account.safeBufferAmount)}</span>
+            <span className="font-semibold text-slate-300">
+              {formatMoney(config.account.safeBufferAmount)}
+            </span>
           </div>
           <div className="absolute right-3 bottom-3 opacity-10 text-emerald-400">
             <DollarSign className="w-14 h-14" />
@@ -185,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div
             className={`text-2xl font-bold tracking-tight ${
-              summary.projectedEndingBalance < 0 ? 'text-rose-400' : 'text-cyan-300'
+              summary.projectedEndingBalance < 0 ? "text-rose-400" : "text-cyan-300"
             }`}
           >
             {formatMoney(summary.projectedEndingBalance)}
@@ -193,8 +195,8 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="mt-2 flex items-center gap-1 text-xs">
             {summary.netCashflow >= 0 ? (
               <span className="text-emerald-400 flex items-center font-medium">
-                <TrendingUp className="w-3.5 h-3.5 mr-0.5 inline" />
-                +{formatMoney(summary.netCashflow)} net
+                <TrendingUp className="w-3.5 h-3.5 mr-0.5 inline" />+
+                {formatMoney(summary.netCashflow)} net
               </span>
             ) : (
               <span className="text-rose-400 flex items-center font-medium">
@@ -213,10 +215,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div
           className={`border rounded-2xl p-4 shadow-sm relative overflow-hidden transition-all ${
             isDanger
-              ? 'bg-rose-950/40 border-rose-800/80 text-rose-200'
+              ? "bg-rose-950/40 border-rose-800/80 text-rose-200"
               : isWarning
-              ? 'bg-amber-950/30 border-amber-800/60 text-amber-200'
-              : 'bg-slate-900/90 border-slate-800 text-slate-200'
+                ? "bg-amber-950/30 border-amber-800/60 text-amber-200"
+                : "bg-slate-900/90 border-slate-800 text-slate-200"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium mb-1">
@@ -234,17 +236,17 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div
             className={`text-2xl font-bold tracking-tight ${
-              isDanger ? 'text-rose-400' : isWarning ? 'text-amber-400' : 'text-emerald-400'
+              isDanger ? "text-rose-400" : isWarning ? "text-amber-400" : "text-emerald-400"
             }`}
           >
             {formatMoney(summary.lowestProjectedBalance)}
           </div>
           <div className="mt-2 text-xs opacity-80">
             {isDanger
-              ? '⚠️ Projected overdraft risk!'
+              ? "⚠️ Projected overdraft risk!"
               : isWarning
-              ? 'Below your target safe buffer'
-              : 'Safely above your buffer'}
+                ? "Below your target safe buffer"
+                : "Safely above your buffer"}
           </div>
         </div>
 

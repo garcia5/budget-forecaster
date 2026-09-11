@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import type { BudgetConfig, AccountType, AccountTransaction, CreditCardExtraPayment } from '../types/budget';
-import { getTodayDateString } from '../utils/forecaster';
+import React, { useState, useEffect } from "react";
+import type {
+  BudgetConfig,
+  AccountType,
+  AccountTransaction,
+  CreditCardExtraPayment,
+} from "../types/budget";
+import { getTodayDateString } from "../utils/forecaster";
 import {
   X,
   DollarSign,
@@ -13,34 +18,34 @@ import {
   Sparkles,
   Calendar,
   Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: BudgetConfig;
-  onAddTransaction: (transaction: Omit<AccountTransaction, 'id'>) => void;
-  onAddCardPayment: (payment: Omit<CreditCardExtraPayment, 'id'>) => void;
+  onAddTransaction: (transaction: Omit<AccountTransaction, "id">) => void;
+  onAddCardPayment: (payment: Omit<CreditCardExtraPayment, "id">) => void;
   onDeleteCardPayment?: (cardId: string, paymentId: string) => void;
   onDeleteTransaction?: (id: string) => void;
   initialDate?: string;
-  initialFlow?: 'select' | 'transaction' | 'card_payment';
+  initialFlow?: "select" | "transaction" | "card_payment";
   initialAccountType?: AccountType;
   initialCardId?: string;
 }
 
 const CATEGORY_OPTIONS = [
-  'Groceries',
-  'Dining Out',
-  'Shopping',
-  'Utilities',
-  'Travel & Transit',
-  'Entertainment',
-  'Health & Wellness',
-  'Home & Rent',
-  'Personal Care',
-  'Freelance / Bonus',
-  'Other',
+  "Groceries",
+  "Dining Out",
+  "Shopping",
+  "Utilities",
+  "Travel & Transit",
+  "Entertainment",
+  "Health & Wellness",
+  "Home & Rent",
+  "Personal Care",
+  "Freelance / Bonus",
+  "Other",
 ];
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
@@ -52,48 +57,44 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onDeleteCardPayment,
   onDeleteTransaction,
   initialDate,
-  initialFlow = 'select',
-  initialAccountType = 'checking',
+  initialFlow = "select",
+  initialAccountType = "checking",
   initialCardId,
 }) => {
-  const [currentStep, setCurrentStep] = useState<'select' | 'transaction' | 'card_payment'>(initialFlow);
+  const [currentStep, setCurrentStep] = useState<"select" | "transaction" | "card_payment">(
+    initialFlow,
+  );
 
   const allExtraPayments = (config.creditCards || [])
     .flatMap((card) =>
       (card.extraPayments || []).map((payment) => ({
         card,
         payment,
-      }))
+      })),
     )
     .sort((a, b) => a.payment.date.localeCompare(b.payment.date));
 
   const allTransactions = [...(config.transactions || [])].sort((a, b) =>
-    b.date.localeCompare(a.date)
+    b.date.localeCompare(a.date),
   );
 
   // Transaction form states
   const [accountType, setAccountType] = useState<AccountType>(initialAccountType);
-  const [cardId, setCardId] = useState<string>(
-    initialCardId || config.creditCards[0]?.id || ''
-  );
-  const [type, setType] = useState<'inflow' | 'outflow'>('outflow');
-  const [name, setName] = useState<string>('');
-  const [amount, setAmount] = useState<string>('');
-  const [date, setDate] = useState<string>(
-    initialDate || getTodayDateString()
-  );
-  const [category, setCategory] = useState<string>('Groceries');
-  const [note, setNote] = useState<string>('');
+  const [cardId, setCardId] = useState<string>(initialCardId || config.creditCards[0]?.id || "");
+  const [type, setType] = useState<"inflow" | "outflow">("outflow");
+  const [name, setName] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [date, setDate] = useState<string>(initialDate || getTodayDateString());
+  const [category, setCategory] = useState<string>("Groceries");
+  const [note, setNote] = useState<string>("");
 
   // Card payment form states
   const [paydownCardId, setPaydownCardId] = useState<string>(
-    initialCardId || config.creditCards[0]?.id || ''
+    initialCardId || config.creditCards[0]?.id || "",
   );
-  const [paydownAmount, setPaydownAmount] = useState<string>('');
-  const [paydownDate, setPaydownDate] = useState<string>(
-    initialDate || getTodayDateString()
-  );
-  const [paydownNote, setPaydownNote] = useState<string>('');
+  const [paydownAmount, setPaydownAmount] = useState<string>("");
+  const [paydownDate, setPaydownDate] = useState<string>(initialDate || getTodayDateString());
+  const [paydownNote, setPaydownNote] = useState<string>("");
   const [reducesAutopay, setReducesAutopay] = useState<boolean>(true);
 
   useEffect(() => {
@@ -105,8 +106,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   if (!isOpen) return null;
 
-  const selectedCard = config.creditCards.find(c => c.id === cardId);
-  const selectedPaydownCard = config.creditCards.find(c => c.id === paydownCardId);
+  const selectedCard = config.creditCards.find((c) => c.id === cardId);
+  const selectedPaydownCard = config.creditCards.find((c) => c.id === paydownCardId);
 
   const handleTransactionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +118,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
     onAddTransaction({
       accountType,
-      cardId: accountType === 'credit_card' ? cardId : undefined,
+      cardId: accountType === "credit_card" ? cardId : undefined,
       name: name.trim(),
       amount: parsedAmount,
       type,
@@ -148,13 +149,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   };
 
   const formatMoney = (val: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         {/* ================= PAGE 1: SELECTION SCREEN ================= */}
-        {currentStep === 'select' && (
+        {currentStep === "select" && (
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
@@ -164,9 +165,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white m-0">Add to Forecast</h3>
-                  <p className="text-xs text-slate-400 m-0">
-                    Choose what you would like to record
-                  </p>
+                  <p className="text-xs text-slate-400 m-0">Choose what you would like to record</p>
                 </div>
               </div>
               <button
@@ -180,14 +179,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             {/* Selection Options */}
             <div className="p-6 space-y-4">
               <p className="text-xs text-slate-400 leading-relaxed m-0">
-                Select whether you want to record an ad-hoc income/expense transaction, or make a payment from Checking to knock down a credit card balance.
+                Select whether you want to record an ad-hoc income/expense transaction, or make a
+                payment from Checking to knock down a credit card balance.
               </p>
 
               <div className="grid grid-cols-1 gap-3.5">
                 {/* Option 1: Transaction */}
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('transaction')}
+                  onClick={() => setCurrentStep("transaction")}
                   className="group w-full p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/50 hover:border-emerald-500/60 text-left transition-all cursor-pointer flex items-start gap-4"
                 >
                   <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors shrink-0">
@@ -203,7 +203,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Record spending or income directly against your Checking Account or an individual Credit Card charge.
+                      Record spending or income directly against your Checking Account or an
+                      individual Credit Card charge.
                     </p>
                     <div className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-emerald-400 group-hover:translate-x-0.5 transition-transform">
                       Continue to transaction details <ArrowRight className="w-3.5 h-3.5" />
@@ -214,10 +215,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 {/* Option 2: Card Payment */}
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('card_payment')}
+                  onClick={() => setCurrentStep("card_payment")}
                   disabled={config.creditCards.length === 0}
                   className={`group w-full p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/50 hover:border-amber-500/60 text-left transition-all cursor-pointer flex items-start gap-4 ${
-                    config.creditCards.length === 0 ? 'opacity-40 cursor-not-allowed hover:border-slate-800' : ''
+                    config.creditCards.length === 0
+                      ? "opacity-40 cursor-not-allowed hover:border-slate-800"
+                      : ""
                   }`}
                 >
                   <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors shrink-0">
@@ -233,7 +236,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Make an extra payment from Checking on any date to pay down an existing credit card balance and optionally reduce autopay.
+                      Make an extra payment from Checking on any date to pay down an existing credit
+                      card balance and optionally reduce autopay.
                     </p>
                     {config.creditCards.length === 0 ? (
                       <p className="text-[11px] text-rose-400 mt-2">
@@ -263,14 +267,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         )}
 
         {/* ================= PAGE 2: TRANSACTION FORM ================= */}
-        {currentStep === 'transaction' && (
+        {currentStep === "transaction" && (
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('select')}
+                  onClick={() => setCurrentStep("select")}
                   className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer mr-1"
                   title="Back to selection"
                 >
@@ -298,17 +302,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <form onSubmit={handleTransactionSubmit} className="p-6 space-y-4 overflow-y-auto">
               {/* Account Selection */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Account
-                </label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Account</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setAccountType('checking')}
+                    onClick={() => setAccountType("checking")}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      accountType === 'checking'
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-sm'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      accountType === "checking"
+                        ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-sm"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     <Building className="w-4 h-4" />
@@ -317,13 +319,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setAccountType('credit_card')}
+                    onClick={() => setAccountType("credit_card")}
                     disabled={config.creditCards.length === 0}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      accountType === 'credit_card'
-                        ? 'bg-amber-600/20 border-amber-500 text-amber-300 shadow-sm'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                    } ${config.creditCards.length === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      accountType === "credit_card"
+                        ? "bg-amber-600/20 border-amber-500 text-amber-300 shadow-sm"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                    } ${config.creditCards.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
                   >
                     <CreditCard className="w-4 h-4" />
                     Credit Card
@@ -332,7 +334,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               </div>
 
               {/* Credit Card Selector if accountType === 'credit_card' */}
-              {accountType === 'credit_card' && (
+              {accountType === "credit_card" && (
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Which Credit Card?
@@ -345,7 +347,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   >
                     {config.creditCards.map((card) => (
                       <option key={card.id} value={card.id}>
-                        {card.name} (Due {card.paymentDueDay}th • Bal: ${card.currentStatementBalance.toLocaleString('en-US')})
+                        {card.name} (Due {card.paymentDueDay}th • Bal: $
+                        {card.currentStatementBalance.toLocaleString("en-US")})
                       </option>
                     ))}
                   </select>
@@ -354,31 +357,31 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
               {/* Transaction Type */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Type
-                </label>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setType('outflow')}
+                    onClick={() => setType("outflow")}
                     className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
-                      type === 'outflow'
-                        ? 'bg-rose-600/20 border-rose-500 text-rose-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      type === "outflow"
+                        ? "bg-rose-600/20 border-rose-500 text-rose-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
-                    {accountType === 'checking' ? '💸 Expense / Withdrawal' : '💳 Card Charge / Purchase'}
+                    {accountType === "checking"
+                      ? "💸 Expense / Withdrawal"
+                      : "💳 Card Charge / Purchase"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setType('inflow')}
+                    onClick={() => setType("inflow")}
                     className={`py-1.5 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
-                      type === 'inflow'
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      type === "inflow"
+                        ? "bg-emerald-600/20 border-emerald-500 text-emerald-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
-                    {accountType === 'checking' ? '💰 Deposit / Income' : '↩️ Card Refund / Credit'}
+                    {accountType === "checking" ? "💰 Deposit / Income" : "↩️ Card Refund / Credit"}
                   </button>
                 </div>
               </div>
@@ -393,7 +396,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={accountType === 'checking' ? 'e.g. Venmo to Alex, Car repair' : "e.g. Trader Joe's, Flight ticket"}
+                    placeholder={
+                      accountType === "checking"
+                        ? "e.g. Venmo to Alex, Car repair"
+                        : "e.g. Trader Joe's, Flight ticket"
+                    }
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
                     required
                   />
@@ -418,9 +425,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               {/* Date & Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Date
-                  </label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Date</label>
                   <input
                     type="date"
                     value={date}
@@ -431,9 +436,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Category
-                  </label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
@@ -466,18 +469,23 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-start gap-2.5 text-xs text-slate-400">
                 <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                 <div>
-                  {accountType === 'checking' ? (
+                  {accountType === "checking" ? (
                     <span>
-                      <strong className="text-slate-200">Checking impact:</strong> Directly adjusts your cash checking balance on{' '}
-                      <span className="text-emerald-300 font-medium">{date || 'selected date'}</span>.
+                      <strong className="text-slate-200">Checking impact:</strong> Directly adjusts
+                      your cash checking balance on{" "}
+                      <span className="text-emerald-300 font-medium">
+                        {date || "selected date"}
+                      </span>
+                      .
                     </span>
                   ) : (
                     <span>
-                      <strong className="text-slate-200">Credit Card impact:</strong> Tracked on {date || 'selected date'} and automatically rolls into{' '}
+                      <strong className="text-slate-200">Credit Card impact:</strong> Tracked on{" "}
+                      {date || "selected date"} and automatically rolls into{" "}
                       <span className="text-amber-300 font-medium">
-                        {selectedCard?.name || 'card'} upcoming statement autopay
-                      </span>{' '}
-                      from checking on the {selectedCard?.paymentDueDay || 'due'}th.
+                        {selectedCard?.name || "card"} upcoming statement autopay
+                      </span>{" "}
+                      from checking on the {selectedCard?.paymentDueDay || "due"}th.
                     </span>
                   )}
                 </div>
@@ -490,15 +498,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                       Recorded Transactions ({allTransactions.length})
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      Click trash to delete
-                    </span>
+                    <span className="text-[11px] text-slate-500">Click trash to delete</span>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {allTransactions.map((tx) => {
-                      const isChecking = tx.accountType === 'checking';
-                      const card = tx.cardId ? config.creditCards.find((c) => c.id === tx.cardId) : undefined;
-                      const isInflow = tx.type === 'inflow';
+                      const isChecking = tx.accountType === "checking";
+                      const card = tx.cardId
+                        ? config.creditCards.find((c) => c.id === tx.cardId)
+                        : undefined;
+                      const isInflow = tx.type === "inflow";
 
                       return (
                         <div
@@ -509,34 +517,43 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                             <div
                               className={`p-1.5 rounded-lg shrink-0 ${
                                 isChecking
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                               }`}
                             >
-                              {isChecking ? <Building className="w-3.5 h-3.5" /> : <CreditCard className="w-3.5 h-3.5" />}
+                              {isChecking ? (
+                                <Building className="w-3.5 h-3.5" />
+                              ) : (
+                                <CreditCard className="w-3.5 h-3.5" />
+                              )}
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold text-white truncate flex items-center gap-2">
                                 <span>{tx.name}</span>
                                 <span
                                   className={`font-mono font-medium ${
-                                    isInflow ? 'text-emerald-400' : 'text-slate-300'
+                                    isInflow ? "text-emerald-400" : "text-slate-300"
                                   }`}
                                 >
-                                  {isInflow ? '+' : '-'}{formatMoney(tx.amount)}
+                                  {isInflow ? "+" : "-"}
+                                  {formatMoney(tx.amount)}
                                 </span>
                               </div>
                               <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
                                 <span>{tx.date}</span>
                                 <span className="text-slate-500">•</span>
-                                <span>{isChecking ? 'Checking' : card?.name || 'Credit Card'}</span>
+                                <span>{isChecking ? "Checking" : card?.name || "Credit Card"}</span>
                                 {tx.category && (
                                   <>
                                     <span className="text-slate-500">•</span>
                                     <span>{tx.category}</span>
                                   </>
                                 )}
-                                {tx.note && <span className="truncate italic text-slate-500">"{tx.note}"</span>}
+                                {tx.note && (
+                                  <span className="truncate italic text-slate-500">
+                                    "{tx.note}"
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -561,7 +578,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('select')}
+                  onClick={() => setCurrentStep("select")}
                   className="px-3 py-2 text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Back
@@ -587,14 +604,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         )}
 
         {/* ================= PAGE 2: CARD PAYMENT FORM ================= */}
-        {currentStep === 'card_payment' && (
+        {currentStep === "card_payment" && (
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('select')}
+                  onClick={() => setCurrentStep("select")}
                   className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer mr-1"
                   title="Back to selection"
                 >
@@ -633,7 +650,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 >
                   {config.creditCards.map((card) => (
                     <option key={card.id} value={card.id}>
-                      {card.name} (Due {card.paymentDueDay}th • Statement Bal: {formatMoney(card.currentStatementBalance)})
+                      {card.name} (Due {card.paymentDueDay}th • Statement Bal:{" "}
+                      {formatMoney(card.currentStatementBalance)})
                     </option>
                   ))}
                 </select>
@@ -646,7 +664,9 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     Payment Amount ($)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xs">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xs">
+                      $
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -683,9 +703,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   onChange={(e) => setReducesAutopay(e.target.checked)}
                   className="mt-0.5 rounded border-slate-700 text-amber-500 focus:ring-amber-500 bg-slate-900 cursor-pointer"
                 />
-                <label htmlFor="reducesAutopayModal" className="text-xs text-slate-300 cursor-pointer">
+                <label
+                  htmlFor="reducesAutopayModal"
+                  className="text-xs text-slate-300 cursor-pointer"
+                >
                   <span className="font-semibold text-white block">Reduce upcoming autopay</span>
-                  Deduct this amount from the scheduled full-statement autopay on the {selectedPaydownCard?.paymentDueDay || 'due'}th of the month.
+                  Deduct this amount from the scheduled full-statement autopay on the{" "}
+                  {selectedPaydownCard?.paymentDueDay || "due"}th of the month.
                 </label>
               </div>
 
@@ -708,14 +732,18 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <span>
-                    <strong className="text-slate-200">Checking impact:</strong> Deducts{' '}
+                    <strong className="text-slate-200">Checking impact:</strong> Deducts{" "}
                     <span className="text-amber-300 font-semibold">
-                      {parseFloat(paydownAmount) > 0 ? formatMoney(parseFloat(paydownAmount)) : '$0.00'}
-                    </span>{' '}
-                    from Checking on <span className="text-white font-medium">{paydownDate || 'selected date'}</span>.{' '}
+                      {parseFloat(paydownAmount) > 0
+                        ? formatMoney(parseFloat(paydownAmount))
+                        : "$0.00"}
+                    </span>{" "}
+                    from Checking on{" "}
+                    <span className="text-white font-medium">{paydownDate || "selected date"}</span>
+                    .{" "}
                     {reducesAutopay
-                      ? `Upcoming statement autopay on the ${selectedPaydownCard?.paymentDueDay || 'due'}th will be reduced accordingly.`
-                      : 'Scheduled statement autopay amount will remain unchanged.'}
+                      ? `Upcoming statement autopay on the ${selectedPaydownCard?.paymentDueDay || "due"}th will be reduced accordingly.`
+                      : "Scheduled statement autopay amount will remain unchanged."}
                   </span>
                 </div>
               </div>
@@ -727,9 +755,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                       Recorded Card Payments ({allExtraPayments.length})
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      Click trash to delete
-                    </span>
+                    <span className="text-[11px] text-slate-500">Click trash to delete</span>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {allExtraPayments.map(({ card, payment }) => (
@@ -744,11 +770,17 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                           <div className="min-w-0">
                             <div className="font-semibold text-white truncate flex items-center gap-2">
                               <span>{card.name}</span>
-                              <span className="text-amber-400 font-mono font-medium">-{formatMoney(payment.amount)}</span>
+                              <span className="text-amber-400 font-mono font-medium">
+                                -{formatMoney(payment.amount)}
+                              </span>
                             </div>
                             <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
                               <span>{payment.date}</span>
-                              {payment.note && <span className="truncate italic text-slate-500">"{payment.note}"</span>}
+                              {payment.note && (
+                                <span className="truncate italic text-slate-500">
+                                  "{payment.note}"
+                                </span>
+                              )}
                               {payment.reducesStatementAutopay && (
                                 <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
                                   Reduces autopay
@@ -777,7 +809,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('select')}
+                  onClick={() => setCurrentStep("select")}
                   className="px-3 py-2 text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Back

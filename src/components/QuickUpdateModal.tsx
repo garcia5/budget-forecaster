@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { X, DollarSign, CreditCard, Check } from 'lucide-react';
-import type { BudgetConfig } from '../types/budget';
-import { getTodayDateString } from '../utils/forecaster';
+import React, { useState } from "react";
+import { X, DollarSign, CreditCard, Check } from "lucide-react";
+import type { BudgetConfig } from "../types/budget";
+import { getTodayDateString } from "../utils/forecaster";
 
 interface QuickUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: BudgetConfig;
   onSaveConfig: (newConfig: BudgetConfig) => void;
-  initialTab?: 'checking' | 'cards';
+  initialTab?: "checking" | "cards";
 }
 
 export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
@@ -16,23 +16,25 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
   onClose,
   config,
   onSaveConfig,
-  initialTab = 'checking',
+  initialTab = "checking",
 }) => {
-  const [activeTab, setActiveTab] = useState<'checking' | 'cards'>(initialTab);
+  const [activeTab, setActiveTab] = useState<"checking" | "cards">(initialTab);
 
   // Checking state
-  const [checkingBalance, setCheckingBalance] = useState<number>(config.account.currentCheckingBalance);
+  const [checkingBalance, setCheckingBalance] = useState<number>(
+    config.account.currentCheckingBalance,
+  );
   const [asOfDate, setAsOfDate] = useState<string>(config.account.asOfDate);
   const [safeBuffer, setSafeBuffer] = useState<number>(config.account.safeBufferAmount);
 
   // Cards statement state
   const [cardsState, setCardsState] = useState(
-    config.creditCards.map(c => ({
+    config.creditCards.map((c) => ({
       id: c.id,
       name: c.name,
       statementBalance: c.currentStatementBalance,
-      statementDate: c.statementDate || '',
-    }))
+      statementDate: c.statementDate || "",
+    })),
   );
 
   if (!isOpen) return null;
@@ -53,8 +55,8 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
 
   const handleSaveCards = (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedCards = config.creditCards.map(c => {
-      const match = cardsState.find(s => s.id === c.id);
+    const updatedCards = config.creditCards.map((c) => {
+      const match = cardsState.find((s) => s.id === c.id);
       if (match) {
         return {
           ...c,
@@ -91,21 +93,21 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
         {/* Tab Navigation */}
         <div className="flex border-b border-slate-800 bg-slate-950/40 px-6">
           <button
-            onClick={() => setActiveTab('checking')}
+            onClick={() => setActiveTab("checking")}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === 'checking'
-                ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === "checking"
+                ? "border-emerald-500 text-emerald-400 bg-emerald-500/10"
+                : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             Checking Account
           </button>
           <button
-            onClick={() => setActiveTab('cards')}
+            onClick={() => setActiveTab("cards")}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === 'cards'
-                ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === "cards"
+                ? "border-emerald-500 text-emerald-400 bg-emerald-500/10"
+                : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             Card Statement Balances
@@ -114,11 +116,12 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
 
         {/* Tab Content */}
         <div className="p-6">
-          {activeTab === 'checking' && (
+          {activeTab === "checking" && (
             <form onSubmit={handleSaveChecking} className="space-y-4">
               <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/80 mb-2">
                 <p className="text-xs text-slate-300 leading-relaxed m-0">
-                  Update your current checking account balance as of today or another date. The forecast recalculates all subsequent daily balances from this baseline.
+                  Update your current checking account balance as of today or another date. The
+                  forecast recalculates all subsequent daily balances from this baseline.
                 </p>
               </div>
 
@@ -127,13 +130,15 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                   Current Checking Balance ($)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold">
+                    $
+                  </span>
                   <input
                     type="number"
                     step="0.01"
                     required
                     value={checkingBalance}
-                    onChange={e => setCheckingBalance(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setCheckingBalance(parseFloat(e.target.value) || 0)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-4 py-2.5 text-white font-semibold text-lg focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
@@ -142,9 +147,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-slate-300">
-                      As of Date
-                    </label>
+                    <label className="block text-xs font-medium text-slate-300">As of Date</label>
                     <button
                       type="button"
                       onClick={() => setAsOfDate(getTodayDateString())}
@@ -157,7 +160,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                     type="date"
                     required
                     value={asOfDate}
-                    onChange={e => setAsOfDate(e.target.value)}
+                    onChange={(e) => setAsOfDate(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
@@ -170,7 +173,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                     type="number"
                     step="10"
                     value={safeBuffer}
-                    onChange={e => setSafeBuffer(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setSafeBuffer(parseFloat(e.target.value) || 0)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
@@ -194,11 +197,12 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
             </form>
           )}
 
-          {activeTab === 'cards' && (
+          {activeTab === "cards" && (
             <form onSubmit={handleSaveCards} className="space-y-4">
               <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/80 mb-2">
                 <p className="text-xs text-slate-300 leading-relaxed m-0">
-                  Update your credit card statement balances when each card's monthly statement closes. On the payment due date, checking balance drops by the statement balance.
+                  Update your credit card statement balances when each card's monthly statement
+                  closes. On the payment due date, checking balance drops by the statement balance.
                 </p>
               </div>
 
@@ -219,18 +223,21 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                           {card.name}
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
-                          Due day: {config.creditCards.find(c => c.id === card.id)?.paymentDueDay}th of month
+                          Due day: {config.creditCards.find((c) => c.id === card.id)?.paymentDueDay}
+                          th of month
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <div className="relative w-32">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">$</span>
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">
+                            $
+                          </span>
                           <input
                             type="number"
                             step="0.01"
                             value={card.statementBalance}
-                            onChange={e => {
+                            onChange={(e) => {
                               const val = parseFloat(e.target.value) || 0;
                               const updated = [...cardsState];
                               updated[idx].statementBalance = val;
@@ -242,7 +249,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                         <input
                           type="date"
                           value={card.statementDate}
-                          onChange={e => {
+                          onChange={(e) => {
                             const updated = [...cardsState];
                             updated[idx].statementDate = e.target.value;
                             setCardsState(updated);

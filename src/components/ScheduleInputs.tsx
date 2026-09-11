@@ -1,6 +1,11 @@
-import React from 'react';
+import React from "react";
 
-export type StandardScheduleType = 'biweekly' | 'semi-monthly' | 'monthly' | 'per-paycheck' | 'exact-dates';
+export type StandardScheduleType =
+  | "biweekly"
+  | "semi-monthly"
+  | "monthly"
+  | "per-paycheck"
+  | "exact-dates";
 
 interface ScheduleInputsProps {
   amount: number;
@@ -14,7 +19,7 @@ interface ScheduleInputsProps {
   dayOfMonth?: number;
   onDayOfMonthChange?: (day: number) => void;
   includePerPaycheck?: boolean;
-  themeColor?: 'emerald' | 'purple';
+  themeColor?: "emerald" | "purple";
 }
 
 export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
@@ -29,9 +34,10 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
   dayOfMonth = 1,
   onDayOfMonthChange,
   includePerPaycheck = false,
-  themeColor = 'emerald',
+  themeColor = "emerald",
 }) => {
-  const focusBorder = themeColor === 'purple' ? 'focus:border-purple-500' : 'focus:border-emerald-500';
+  const focusBorder =
+    themeColor === "purple" ? "focus:border-purple-500" : "focus:border-emerald-500";
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -41,12 +47,14 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
           Amount per Occurrence ($)
         </label>
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">$</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">
+            $
+          </span>
           <input
             type="number"
             step="0.01"
-            value={amount || ''}
-            onChange={e => onAmountChange(parseFloat(e.target.value) || 0)}
+            value={amount || ""}
+            onChange={(e) => onAmountChange(parseFloat(e.target.value) || 0)}
             placeholder="0.00"
             className={`w-full bg-slate-900 border border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-white text-xs font-semibold focus:outline-none ${focusBorder}`}
           />
@@ -60,7 +68,7 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
         </label>
         <select
           value={scheduleType}
-          onChange={e => onScheduleTypeChange(e.target.value as StandardScheduleType)}
+          onChange={(e) => onScheduleTypeChange(e.target.value as StandardScheduleType)}
           className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none ${focusBorder}`}
         >
           {includePerPaycheck && (
@@ -73,21 +81,21 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
       </div>
 
       {/* 3 & 4. Dynamic Schedule Config */}
-      {scheduleType === 'biweekly' && (
+      {scheduleType === "biweekly" && (
         <div className="sm:col-span-2">
           <label className="block text-[11px] font-medium text-slate-400 mb-1">
             Anchor Reference Date
           </label>
           <input
             type="date"
-            value={anchorDate || '2026-03-06'}
-            onChange={e => onAnchorDateChange?.(e.target.value)}
+            value={anchorDate || "2026-03-06"}
+            onChange={(e) => onAnchorDateChange?.(e.target.value)}
             className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300 text-xs focus:outline-none ${focusBorder}`}
           />
         </div>
       )}
 
-      {scheduleType === 'semi-monthly' && (
+      {scheduleType === "semi-monthly" && (
         <>
           <div>
             <label className="block text-[11px] font-medium text-slate-400 mb-1">
@@ -98,7 +106,7 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
               min="1"
               max="31"
               value={daysOfMonth[0] ?? 15}
-              onChange={e => {
+              onChange={(e) => {
                 const d1 = parseInt(e.target.value) || 1;
                 const d2 = daysOfMonth[1] ?? -1;
                 onDaysOfMonthChange?.([d1, d2]);
@@ -113,7 +121,7 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
             </label>
             <select
               value={daysOfMonth[1] ?? -1}
-              onChange={e => {
+              onChange={(e) => {
                 const d1 = daysOfMonth[0] ?? 15;
                 const d2 = parseInt(e.target.value);
                 onDaysOfMonthChange?.([d1, d2]);
@@ -121,7 +129,7 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
               className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none ${focusBorder}`}
             >
               <option value="-1">Last Day of Month (End of Month)</option>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                 <option key={day} value={day}>
                   Day {day}
                 </option>
@@ -131,23 +139,21 @@ export const ScheduleInputs: React.FC<ScheduleInputsProps> = ({
         </>
       )}
 
-      {scheduleType === 'monthly' && (
+      {scheduleType === "monthly" && (
         <div className="sm:col-span-2">
-          <label className="block text-[11px] font-medium text-slate-400 mb-1">
-            Day of Month
-          </label>
+          <label className="block text-[11px] font-medium text-slate-400 mb-1">Day of Month</label>
           <input
             type="number"
             min="1"
             max="31"
             value={dayOfMonth || 1}
-            onChange={e => onDayOfMonthChange?.(parseInt(e.target.value) || 1)}
+            onChange={(e) => onDayOfMonthChange?.(parseInt(e.target.value) || 1)}
             className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none ${focusBorder}`}
           />
         </div>
       )}
 
-      {scheduleType === 'per-paycheck' && (
+      {scheduleType === "per-paycheck" && (
         <div className="sm:col-span-2 flex items-center pt-3">
           <span className="text-[11px] text-purple-300/80 italic">
             ⚡ Automatically transfers whenever an active paycheck or income hits

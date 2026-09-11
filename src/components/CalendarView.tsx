@@ -1,9 +1,5 @@
-import React, { useState } from 'react';
-import type {
-  MonthlyForecastSummary,
-  BudgetConfig,
-  ForecastTransaction,
-} from '../types/budget';
+import React, { useState } from "react";
+import type { MonthlyForecastSummary, BudgetConfig, ForecastTransaction } from "../types/budget";
 import {
   DollarSign,
   CreditCard,
@@ -15,7 +11,7 @@ import {
   Plus,
   RotateCcw,
   Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface CalendarViewProps {
   summary: MonthlyForecastSummary;
@@ -23,7 +19,7 @@ interface CalendarViewProps {
   onUpdateAutoDepositOverride: (
     depositId: string,
     key: string,
-    override: { skipped?: boolean; overrideAmount?: number }
+    override: { skipped?: boolean; overrideAmount?: number },
   ) => void;
   onOpenQuickPaydownWithDate: (dateStr: string) => void;
   onOpenAddTransactionWithDate: (dateStr: string) => void;
@@ -44,10 +40,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     transaction: ForecastTransaction;
     dateStr: string;
   } | null>(null);
-  const [tweakAmountInput, setTweakAmountInput] = useState<string>('');
+  const [tweakAmountInput, setTweakAmountInput] = useState<string>("");
 
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
 
   const firstDayDate = new Date(summary.year, summary.month - 1, 1);
   const startDayOfWeek = firstDayDate.getDay();
@@ -56,7 +56,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const handleOpenTweak = (tx: ForecastTransaction, dateStr: string) => {
     setSelectedAutoDeposit({ transaction: tx, dateStr });
-    setTweakAmountInput(String(tx.amount || tx.meta?.defaultAmount || ''));
+    setTweakAmountInput(String(tx.amount || tx.meta?.defaultAmount || ""));
   };
 
   const handleApplySkip = (skip: boolean) => {
@@ -132,8 +132,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
       {/* Weekday Labels */}
       <div className="grid grid-cols-7 gap-1.5 mb-1.5 text-center">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} className="text-xs font-semibold text-slate-400 py-1 uppercase tracking-wider">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div
+            key={d}
+            className="text-xs font-semibold text-slate-400 py-1 uppercase tracking-wider"
+          >
             {d}
           </div>
         ))}
@@ -142,29 +145,33 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Days Grid */}
       <div className="grid grid-cols-7 gap-1.5">
         {emptyCells.map((_, i) => (
-          <div key={`empty-${i}`} className="min-h-[100px] bg-slate-950/30 rounded-xl border border-transparent" />
+          <div
+            key={`empty-${i}`}
+            className="min-h-[100px] bg-slate-950/30 rounded-xl border border-transparent"
+          />
         ))}
 
-        {summary.days.map(day => {
+        {summary.days.map((day) => {
           const isDanger = !day.isPast && day.endingBalance < 0;
-          const isWarning = !day.isPast && !isDanger && day.endingBalance < config.account.safeBufferAmount;
+          const isWarning =
+            !day.isPast && !isDanger && day.endingBalance < config.account.safeBufferAmount;
 
           return (
             <div
               key={day.date}
               className={`min-h-[110px] p-2 rounded-xl border transition-all flex flex-col justify-between group relative ${
                 day.isToday
-                  ? 'bg-slate-800/90 border-emerald-500/80 shadow-md shadow-emerald-500/10'
+                  ? "bg-slate-800/90 border-emerald-500/80 shadow-md shadow-emerald-500/10"
                   : day.isPast
-                  ? 'bg-slate-950/40 border-slate-900 opacity-60'
-                  : 'bg-slate-950/70 border-slate-800/80 hover:border-slate-700'
+                    ? "bg-slate-950/40 border-slate-900 opacity-60"
+                    : "bg-slate-950/70 border-slate-800/80 hover:border-slate-700"
               }`}
             >
               {/* Day Header */}
               <div className="flex items-center justify-between">
                 <span
                   className={`text-xs font-bold w-5 h-5 rounded-md flex items-center justify-center ${
-                    day.isToday ? 'bg-emerald-500 text-slate-950 font-extrabold' : 'text-slate-300'
+                    day.isToday ? "bg-emerald-500 text-slate-950 font-extrabold" : "text-slate-300"
                   }`}
                 >
                   {day.dayNumber}
@@ -191,20 +198,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               {/* Transactions Badges */}
               <div className="space-y-1 my-1.5 overflow-hidden">
                 {/* Inflows */}
-                {day.inflows.map(inf => {
-                  const isCardCredit = inf.category === 'credit_card_credit';
-                  const isCheckingInflow = inf.category === 'checking_inflow';
+                {day.inflows.map((inf) => {
+                  const isCardCredit = inf.category === "credit_card_credit";
+                  const isCheckingInflow = inf.category === "checking_inflow";
                   const isAdHoc = isCardCredit || isCheckingInflow;
-                  const txId = inf.id.replace('tx-', '');
+                  const txId = inf.id.replace("tx-", "");
 
                   return (
                     <div
                       key={inf.id}
-                      title={`${inf.name}: +${formatMoney(inf.amount)}${isCardCredit ? ' (Card Credit/Refund)' : ''}`}
+                      title={`${inf.name}: +${formatMoney(inf.amount)}${isCardCredit ? " (Card Credit/Refund)" : ""}`}
                       className={`group flex items-center justify-between text-[10px] px-1.5 py-0.5 rounded truncate ${
                         isCardCredit
-                          ? 'bg-cyan-950/60 border border-cyan-800/60 text-cyan-300'
-                          : 'bg-emerald-950/60 border border-emerald-800/60 text-emerald-300'
+                          ? "bg-cyan-950/60 border border-cyan-800/60 text-cyan-300"
+                          : "bg-emerald-950/60 border border-emerald-800/60 text-emerald-300"
                       }`}
                     >
                       <span className="truncate flex items-center gap-1 min-w-0">
@@ -236,12 +243,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 })}
 
                 {/* Outflows */}
-                {day.outflows.map(out => {
-                  const isCardAutopay = out.category === 'credit_card_autopay';
-                  const isCardExtra = out.category === 'credit_card_extra_payment';
-                  const isCardCharge = out.category === 'credit_card_charge';
-                  const isCheckingOutflow = out.category === 'checking_outflow';
-                  const isAD = out.category === 'auto_deposit';
+                {day.outflows.map((out) => {
+                  const isCardAutopay = out.category === "credit_card_autopay";
+                  const isCardExtra = out.category === "credit_card_extra_payment";
+                  const isCardCharge = out.category === "credit_card_charge";
+                  const isCheckingOutflow = out.category === "checking_outflow";
+                  const isAD = out.category === "auto_deposit";
 
                   if (isAD) {
                     return (
@@ -252,8 +259,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         title={`Click to tweak/skip: ${out.name}`}
                         className={`w-full text-left flex items-center justify-between text-[10px] px-1.5 py-0.5 rounded border transition-all cursor-pointer ${
                           out.isSkipped
-                            ? 'bg-slate-900/80 border-slate-800 text-slate-500 line-through'
-                            : 'bg-purple-950/60 border-purple-800/60 text-purple-300 hover:bg-purple-900/50'
+                            ? "bg-slate-900/80 border-slate-800 text-slate-500 line-through"
+                            : "bg-purple-950/60 border-purple-800/60 text-purple-300 hover:bg-purple-900/50"
                         }`}
                       >
                         <span className="truncate flex items-center gap-1">
@@ -261,14 +268,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           {out.name}
                         </span>
                         <span className="font-semibold shrink-0 ml-1">
-                          {out.isSkipped ? 'Skipped' : `-${formatMoney(out.amount)}`}
+                          {out.isSkipped ? "Skipped" : `-${formatMoney(out.amount)}`}
                         </span>
                       </button>
                     );
                   }
 
                   if (isCardCharge) {
-                    const txId = out.id.replace('tx-', '');
+                    const txId = out.id.replace("tx-", "");
                     return (
                       <div
                         key={out.id}
@@ -300,7 +307,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   }
 
                   if (isCardExtra) {
-                    const paymentId = out.id.replace('cc-extra-', '');
+                    const paymentId = out.id.replace("cc-extra-", "");
                     return (
                       <div
                         key={out.id}
@@ -350,13 +357,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           <CreditCard className="w-2.5 h-2.5 shrink-0 text-amber-400" />
                           {out.name}
                         </span>
-                        <span className="font-semibold shrink-0 ml-1">-{formatMoney(out.amount)}</span>
+                        <span className="font-semibold shrink-0 ml-1">
+                          -{formatMoney(out.amount)}
+                        </span>
                       </button>
                     );
                   }
 
                   if (isCheckingOutflow) {
-                    const txId = out.id.replace('tx-', '');
+                    const txId = out.id.replace("tx-", "");
                     return (
                       <div
                         key={out.id}
@@ -398,7 +407,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         <Building className="w-2.5 h-2.5 shrink-0" />
                         {out.name}
                       </span>
-                      <span className="font-semibold shrink-0 ml-1">-{formatMoney(out.amount)}</span>
+                      <span className="font-semibold shrink-0 ml-1">
+                        -{formatMoney(out.amount)}
+                      </span>
                     </div>
                   );
                 })}
@@ -407,11 +418,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               {/* Day Projected Balance Footer */}
               <div className="border-t border-slate-800/60 pt-1 flex items-baseline justify-between mt-auto">
                 <span className="text-[9px] uppercase tracking-wider text-slate-500">Bal</span>
-                  <span
-                    className={`text-xs font-bold tracking-tight ${
-                      day.isPast ? 'text-slate-500' : isDanger ? 'text-rose-400' : isWarning ? 'text-amber-400' : 'text-slate-200'
-                    }`}
-                  >
+                <span
+                  className={`text-xs font-bold tracking-tight ${
+                    day.isPast
+                      ? "text-slate-500"
+                      : isDanger
+                        ? "text-rose-400"
+                        : isWarning
+                          ? "text-amber-400"
+                          : "text-slate-200"
+                  }`}
+                >
                   {formatMoney(day.endingBalance)}
                 </span>
               </div>
@@ -441,12 +458,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
             <div className="text-xs text-slate-300 space-y-1">
               <div>
-                Occurrence on <span className="font-semibold text-white">{selectedAutoDeposit.dateStr}</span>
+                Occurrence on{" "}
+                <span className="font-semibold text-white">{selectedAutoDeposit.dateStr}</span>
               </div>
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span>Default scheduled:</span>
                 <span className="font-semibold text-purple-400">
-                  {formatMoney(selectedAutoDeposit.transaction.meta?.defaultAmount || selectedAutoDeposit.transaction.amount)}
+                  {formatMoney(
+                    selectedAutoDeposit.transaction.meta?.defaultAmount ||
+                      selectedAutoDeposit.transaction.amount,
+                  )}
                 </span>
               </div>
               {selectedAutoDeposit.transaction.isSkipped ? (
@@ -481,19 +502,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               )}
 
               {/* Tweak Amount Form */}
-              <form onSubmit={handleApplyTweak} className="space-y-2 pt-2 border-t border-slate-800">
+              <form
+                onSubmit={handleApplyTweak}
+                className="space-y-2 pt-2 border-t border-slate-800"
+              >
                 <label className="block text-[11px] font-medium text-slate-400">
                   Or tweak amount for this occurrence ($):
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">$</span>
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">
+                      $
+                    </span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={tweakAmountInput}
-                      onChange={e => setTweakAmountInput(e.target.value)}
+                      onChange={(e) => setTweakAmountInput(e.target.value)}
                       placeholder="Amount"
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-white text-xs focus:outline-none focus:border-purple-500 font-medium"
                     />
@@ -508,13 +534,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </form>
 
               {/* Reset to Default if overridden or skipped */}
-              {(selectedAutoDeposit.transaction.isSkipped || selectedAutoDeposit.transaction.meta?.isOverridden) && (
+              {(selectedAutoDeposit.transaction.isSkipped ||
+                selectedAutoDeposit.transaction.meta?.isOverridden) && (
                 <button
                   type="button"
                   onClick={handleResetToDefault}
                   className="w-full py-1.5 px-2 text-[11px] font-medium text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <RotateCcw className="w-3 h-3" /> Reset to Default ({formatMoney(selectedAutoDeposit.transaction.meta?.defaultAmount || selectedAutoDeposit.transaction.amount)})
+                  <RotateCcw className="w-3 h-3" /> Reset to Default (
+                  {formatMoney(
+                    selectedAutoDeposit.transaction.meta?.defaultAmount ||
+                      selectedAutoDeposit.transaction.amount,
+                  )}
+                  )
                 </button>
               )}
             </div>

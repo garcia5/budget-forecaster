@@ -1,15 +1,15 @@
-import { useState, useMemo, useEffect } from 'react';
-import type { BudgetConfig, AccountTransaction, CreditCardExtraPayment } from './types/budget';
-import { loadBudgetConfig, saveBudgetConfig, loadBudgetConfigFromDisk } from './utils/storage';
-import { calculateDailyForecast } from './utils/forecaster';
-import { Header } from './components/Header';
-import { DailyBalanceChart } from './components/DailyBalanceChart';
-import { CalendarView } from './components/CalendarView';
-import { DailyLedgerView } from './components/DailyLedgerView';
-import { QuickUpdateModal } from './components/QuickUpdateModal';
-import { ConfigModal } from './components/ConfigModal';
-import { AddTransactionModal } from './components/AddTransactionModal';
-import { Calendar as CalendarIcon, List } from 'lucide-react';
+import { useState, useMemo, useEffect } from "react";
+import type { BudgetConfig, AccountTransaction, CreditCardExtraPayment } from "./types/budget";
+import { loadBudgetConfig, saveBudgetConfig, loadBudgetConfigFromDisk } from "./utils/storage";
+import { calculateDailyForecast } from "./utils/forecaster";
+import { Header } from "./components/Header";
+import { DailyBalanceChart } from "./components/DailyBalanceChart";
+import { CalendarView } from "./components/CalendarView";
+import { DailyLedgerView } from "./components/DailyLedgerView";
+import { QuickUpdateModal } from "./components/QuickUpdateModal";
+import { ConfigModal } from "./components/ConfigModal";
+import { AddTransactionModal } from "./components/AddTransactionModal";
+import { Calendar as CalendarIcon, List } from "lucide-react";
 
 export function App() {
   const [config, setConfig] = useState<BudgetConfig>(() => loadBudgetConfig());
@@ -24,7 +24,7 @@ export function App() {
   // Initialize selected month/year based on current date
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     try {
-      const saved = sessionStorage.getItem('budget_selected_year');
+      const saved = sessionStorage.getItem("budget_selected_year");
       if (saved) return parseInt(saved, 10);
     } catch {}
     return new Date().getFullYear();
@@ -32,7 +32,7 @@ export function App() {
 
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
     try {
-      const saved = sessionStorage.getItem('budget_selected_month');
+      const saved = sessionStorage.getItem("budget_selected_month");
       if (saved) return parseInt(saved, 10);
     } catch {}
     return new Date().getMonth() + 1;
@@ -40,20 +40,24 @@ export function App() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem('budget_selected_year', String(selectedYear));
-      sessionStorage.setItem('budget_selected_month', String(selectedMonth));
+      sessionStorage.setItem("budget_selected_year", String(selectedYear));
+      sessionStorage.setItem("budget_selected_month", String(selectedMonth));
     } catch {}
   }, [selectedYear, selectedMonth]);
 
-  const [viewMode, setViewMode] = useState<'calendar' | 'ledger'>('calendar');
+  const [viewMode, setViewMode] = useState<"calendar" | "ledger">("calendar");
 
   // Modals state
   const [isQuickUpdateOpen, setIsQuickUpdateOpen] = useState<boolean>(false);
-  const [quickUpdateTab, setQuickUpdateTab] = useState<'checking' | 'cards'>('checking');
+  const [quickUpdateTab, setQuickUpdateTab] = useState<"checking" | "cards">("checking");
   const [isConfigOpen, setIsConfigOpen] = useState<boolean>(false);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState<boolean>(false);
-  const [addTransactionInitialDate, setAddTransactionInitialDate] = useState<string | undefined>(undefined);
-  const [addTransactionInitialFlow, setAddTransactionInitialFlow] = useState<'select' | 'transaction' | 'card_payment'>('select');
+  const [addTransactionInitialDate, setAddTransactionInitialDate] = useState<string | undefined>(
+    undefined,
+  );
+  const [addTransactionInitialFlow, setAddTransactionInitialFlow] = useState<
+    "select" | "transaction" | "card_payment"
+  >("select");
 
   // Auto-save whenever config changes (persists to localStorage AND disk)
   const handleSaveConfig = (newConfig: BudgetConfig) => {
@@ -95,11 +99,11 @@ export function App() {
   const handleUpdateAutoDepositOverride = (
     depositId: string,
     key: string,
-    override: { skipped?: boolean; overrideAmount?: number }
+    override: { skipped?: boolean; overrideAmount?: number },
   ) => {
     const updated = {
       ...config,
-      autoDeposits: config.autoDeposits.map(ad => {
+      autoDeposits: config.autoDeposits.map((ad) => {
         if (ad.id === depositId) {
           const newOverrides = { ...ad.overrides };
           if (
@@ -128,11 +132,11 @@ export function App() {
   const handleDeleteExtraPaydown = (cardId: string, paymentId: string) => {
     const updated = {
       ...config,
-      creditCards: config.creditCards.map(c => {
+      creditCards: config.creditCards.map((c) => {
         if (c.id === cardId) {
           return {
             ...c,
-            extraPayments: (c.extraPayments || []).filter(p => p.id !== paymentId),
+            extraPayments: (c.extraPayments || []).filter((p) => p.id !== paymentId),
           };
         }
         return c;
@@ -142,14 +146,14 @@ export function App() {
   };
 
   // Card paydown management
-  const handleAddCardPayment = (paymentData: Omit<CreditCardExtraPayment, 'id'>) => {
+  const handleAddCardPayment = (paymentData: Omit<CreditCardExtraPayment, "id">) => {
     const newPayment: CreditCardExtraPayment = {
       ...paymentData,
       id: `extra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     };
     const updated = {
       ...config,
-      creditCards: config.creditCards.map(c => {
+      creditCards: config.creditCards.map((c) => {
         if (c.id === paymentData.cardId) {
           return {
             ...c,
@@ -164,12 +168,12 @@ export function App() {
 
   const handleOpenPaydownModalWithDate = (dateStr: string) => {
     setAddTransactionInitialDate(dateStr);
-    setAddTransactionInitialFlow('card_payment');
+    setAddTransactionInitialFlow("card_payment");
     setIsAddTransactionOpen(true);
   };
 
   // Ad-hoc transaction management
-  const handleAddTransaction = (transactionData: Omit<AccountTransaction, 'id'>) => {
+  const handleAddTransaction = (transactionData: Omit<AccountTransaction, "id">) => {
     const newTx: AccountTransaction = {
       ...transactionData,
       id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -184,14 +188,14 @@ export function App() {
   const handleDeleteTransaction = (transactionId: string) => {
     const updated = {
       ...config,
-      transactions: (config.transactions || []).filter(t => t.id !== transactionId),
+      transactions: (config.transactions || []).filter((t) => t.id !== transactionId),
     };
     handleSaveConfig(updated);
   };
 
   const handleOpenAddTransactionWithDate = (dateStr: string) => {
     setAddTransactionInitialDate(dateStr);
-    setAddTransactionInitialFlow('select');
+    setAddTransactionInitialFlow("select");
     setIsAddTransactionOpen(true);
   };
 
@@ -208,43 +212,40 @@ export function App() {
           onNextMonth={handleNextMonth}
           onCurrentMonth={handleCurrentMonth}
           onOpenQuickUpdate={() => {
-            setQuickUpdateTab('checking');
+            setQuickUpdateTab("checking");
             setIsQuickUpdateOpen(true);
           }}
           onOpenAddTransaction={() => {
             setAddTransactionInitialDate(undefined);
-            setAddTransactionInitialFlow('select');
+            setAddTransactionInitialFlow("select");
             setIsAddTransactionOpen(true);
           }}
           onOpenConfig={() => setIsConfigOpen(true)}
         />
 
         {/* Daily Running Balance Chart */}
-        <DailyBalanceChart
-          summary={summary}
-          safeBufferAmount={config.account.safeBufferAmount}
-        />
+        <DailyBalanceChart summary={summary} safeBufferAmount={config.account.safeBufferAmount} />
 
         {/* View Switcher & Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-inner">
             <button
-              onClick={() => setViewMode('calendar')}
+              onClick={() => setViewMode("calendar")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'calendar'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                viewMode === "calendar"
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               <CalendarIcon className="w-3.5 h-3.5" />
               Calendar View
             </button>
             <button
-              onClick={() => setViewMode('ledger')}
+              onClick={() => setViewMode("ledger")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'ledger'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                viewMode === "ledger"
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -253,19 +254,20 @@ export function App() {
           </div>
 
           <div className="text-xs text-slate-500 hidden sm:block">
-            {summary.monthName} • End balance:{' '}
+            {summary.monthName} • End balance:{" "}
             <span
               className={`font-semibold ${
-                summary.projectedEndingBalance < 0 ? 'text-rose-400' : 'text-cyan-300'
+                summary.projectedEndingBalance < 0 ? "text-rose-400" : "text-cyan-300"
               }`}
             >
-              ${summary.projectedEndingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              $
+              {summary.projectedEndingBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
 
         {/* View Component */}
-        {viewMode === 'calendar' ? (
+        {viewMode === "calendar" ? (
           <CalendarView
             summary={summary}
             config={config}
@@ -307,7 +309,7 @@ export function App() {
           onSaveConfig={handleSaveConfig}
           onOpenAddTransaction={() => {
             setAddTransactionInitialDate(undefined);
-            setAddTransactionInitialFlow('select');
+            setAddTransactionInitialFlow("select");
             setIsAddTransactionOpen(true);
           }}
         />
@@ -315,7 +317,7 @@ export function App() {
 
       {isAddTransactionOpen && (
         <AddTransactionModal
-          key={`${addTransactionInitialFlow}-${addTransactionInitialDate || 'none'}`}
+          key={`${addTransactionInitialFlow}-${addTransactionInitialDate || "none"}`}
           isOpen={isAddTransactionOpen}
           onClose={() => setIsAddTransactionOpen(false)}
           config={config}

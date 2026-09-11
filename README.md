@@ -20,17 +20,20 @@ A lightweight, local daily budget forecasting tool to project how your money wil
 ## Getting Started
 
 ### Development
+
 ```bash
 npm install
 npm run dev
 ```
 
 ### Run Tests
+
 ```bash
 npm test
 ```
 
 ### Build Production Bundle
+
 ```bash
 npm run build
 npm run preview

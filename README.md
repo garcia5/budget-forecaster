@@ -22,19 +22,19 @@ A lightweight, local daily budget forecasting tool to project how your money wil
 ### Development
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ### Run Tests
 
 ```bash
-npm test
+bun test
 ```
 
 ### Build Production Bundle
 
 ```bash
-npm run build
-npm run preview
+bun run build
+bun run preview
 ```

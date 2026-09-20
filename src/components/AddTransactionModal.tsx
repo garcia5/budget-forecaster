@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type {
   BudgetConfig,
   AccountType,
@@ -97,12 +97,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [paydownNote, setPaydownNote] = useState<string>("");
   const [reducesAutopay, setReducesAutopay] = useState<boolean>(true);
 
-  useEffect(() => {
+  const [prevProps, setPrevProps] = useState({ isOpen, initialDate });
+  if (prevProps.isOpen !== isOpen || prevProps.initialDate !== initialDate) {
+    setPrevProps({ isOpen, initialDate });
     if (isOpen) {
-      setDate(initialDate || getTodayDateString());
-      setPaydownDate(initialDate || getTodayDateString());
+      const nextDate = initialDate || getTodayDateString();
+      setDate(nextDate);
+      setPaydownDate(nextDate);
     }
-  }, [isOpen, initialDate]);
+  }
 
   if (!isOpen) return null;
 

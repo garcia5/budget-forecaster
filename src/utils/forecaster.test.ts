@@ -181,7 +181,7 @@ describe("Forecaster Engine", () => {
     expect(tweakedSummary.projectedEndingBalance).toBe(normalSummary.projectedEndingBalance + 300);
   });
 
-  it("handles semi-monthly schedule with -1 as end of month", () => {
+  it("handles semi-monthly schedule with -1 as end of month and shifts weekend/holiday paychecks to next business day", () => {
     const configSemiMonthly: BudgetConfig = {
       ...baseConfig,
       incomes: [
@@ -199,11 +199,19 @@ describe("Forecaster Engine", () => {
     };
 
     const febSummary = calculateDailyForecast(configSemiMonthly, 2026, 2);
-    expect(febSummary.days[14].inflows.some((i) => i.amount === 3000)).toBe(true);
-    expect(febSummary.days[27].inflows.some((i) => i.amount === 3000)).toBe(true);
+    // Feb 15 is Sunday and Feb 16 is Presidents' Day -> settles Tuesday Feb 17 (index 16)
+    expect(febSummary.days[14].inflows.some((i) => i.amount === 3000)).toBe(false);
+    expect(febSummary.days[16].inflows.some((i) => i.amount === 3000)).toBe(true);
+    // Feb 28 is Saturday -> rolls to Monday March 2
+    expect(febSummary.days[27].inflows.some((i) => i.amount === 3000)).toBe(false);
 
     const marSummary = calculateDailyForecast(configSemiMonthly, 2026, 3);
-    expect(marSummary.days[14].inflows.some((i) => i.amount === 3000)).toBe(true);
+    // Feb 28 (Saturday) settles on Monday Mar 2 (index 1)
+    expect(marSummary.days[1].inflows.some((i) => i.amount === 3000)).toBe(true);
+    // Mar 15 (Sunday) settles on Monday Mar 16 (index 15)
+    expect(marSummary.days[14].inflows.some((i) => i.amount === 3000)).toBe(false);
+    expect(marSummary.days[15].inflows.some((i) => i.amount === 3000)).toBe(true);
+    // Mar 31 (Tuesday) settles on Mar 31 (index 30)
     expect(marSummary.days[30].inflows.some((i) => i.amount === 3000)).toBe(true);
   });
 
@@ -225,12 +233,12 @@ describe("Forecaster Engine", () => {
     };
 
     const summary = calculateDailyForecast(configSemiCustom, 2026, 3);
-    // Fires on Day 1 and Day 15
+    // In March 2026, Mar 1 and Mar 15 are Sundays, so they settle on Monday Mar 2 (index 1) and Monday Mar 16 (index 15)
     expect(
-      summary.days[0].inflows.some((i) => i.name === "Custom Semi Salary" && i.amount === 1500),
+      summary.days[1].inflows.some((i) => i.name === "Custom Semi Salary" && i.amount === 1500),
     ).toBe(true);
     expect(
-      summary.days[14].inflows.some((i) => i.name === "Custom Semi Salary" && i.amount === 1500),
+      summary.days[15].inflows.some((i) => i.name === "Custom Semi Salary" && i.amount === 1500),
     ).toBe(true);
     expect(summary.days[30].inflows.length).toBe(0);
   });
@@ -264,7 +272,7 @@ describe("Forecaster Engine", () => {
     expect(day7.outflows.some((o) => o.name === "Biweekly Savings")).toBe(false);
   });
 
-  it("triggers semi-monthly auto-deposits twice a month (e.g. 15th and end of month)", () => {
+  it("triggers semi-monthly auto-deposits twice a month and shifts weekend/holiday occurrences to next business day", () => {
     const configSemiAD: BudgetConfig = {
       ...baseConfig,
       autoDeposits: [
@@ -281,31 +289,138 @@ describe("Forecaster Engine", () => {
     };
 
     const febSummary = calculateDailyForecast(configSemiAD, 2026, 2);
-    // In Feb 2026 (28 days): fires on 15 and 28
+    // In Feb 2026: Feb 15 is Sunday and Feb 16 is Presidents' Day, so it settles on Tuesday Feb 17 (index 16).
+    // Feb 28 is Saturday, so end-of-month transfer settles on Monday March 2.
+    expect(febSummary.days[14].outflows.some((o) => o.name === "Twice-a-Month Transfer")).toBe(
+      false,
+    );
     expect(
-      febSummary.days[14].outflows.some(
+      febSummary.days[16].outflows.some(
         (o) => o.name === "Twice-a-Month Transfer" && o.amount === 300,
       ),
     ).toBe(true);
-    expect(
-      febSummary.days[27].outflows.some(
-        (o) => o.name === "Twice-a-Month Transfer" && o.amount === 300,
-      ),
-    ).toBe(true);
-    expect(febSummary.days[13].outflows.some((o) => o.name === "Twice-a-Month Transfer")).toBe(
+    expect(febSummary.days[27].outflows.some((o) => o.name === "Twice-a-Month Transfer")).toBe(
       false,
     );
 
     const marSummary = calculateDailyForecast(configSemiAD, 2026, 3);
-    // In Mar 2026 (31 days): fires on 15 and 31
+    // In Mar 2026: Feb 28 (Saturday) rolls into Monday Mar 2 (index 1).
+    // Mar 15 is Sunday, so it settles on Monday Mar 16 (index 15).
+    // Mar 31 is Tuesday (business day, index 30).
     expect(
-      marSummary.days[14].outflows.some(
+      marSummary.days[1].outflows.some(
+        (o) => o.name === "Twice-a-Month Transfer" && o.amount === 300,
+      ),
+    ).toBe(true);
+    expect(marSummary.days[14].outflows.some((o) => o.name === "Twice-a-Month Transfer")).toBe(
+      false,
+    );
+    expect(
+      marSummary.days[15].outflows.some(
         (o) => o.name === "Twice-a-Month Transfer" && o.amount === 300,
       ),
     ).toBe(true);
     expect(
       marSummary.days[30].outflows.some(
         (o) => o.name === "Twice-a-Month Transfer" && o.amount === 300,
+      ),
+    ).toBe(true);
+  });
+
+  it("shifts credit card autopay and auto-deposits falling on weekends or holidays to the next business day", () => {
+    // November 2026:
+    // - Nov 8 is Sunday -> shifts to Monday Nov 9
+    // - Nov 11 is Veterans Day (Wednesday) -> shifts to Thursday Nov 12
+    // - Nov 26 is Thanksgiving (Thursday) -> shifts to Friday Nov 27
+    const novConfig: BudgetConfig = {
+      ...baseConfig,
+      account: {
+        currentCheckingBalance: 5000,
+        asOfDate: "2026-11-01",
+        safeBufferAmount: 500,
+      },
+      incomes: [
+        {
+          id: "inc-alex",
+          name: "Alex Paycheck",
+          amount: 3500,
+          schedule: {
+            type: "biweekly",
+            anchorDate: "2026-09-02", // Lands on Wednesday Nov 11 (Veterans Day) -> pushed to Nov 12
+          },
+          active: true,
+        },
+      ],
+      bills: [],
+      creditCards: [
+        {
+          id: "cc-bilt",
+          name: "Bilt",
+          statementCloseDay: 18,
+          paymentDueDay: 8, // Nov 8, 2026 is Sunday
+          currentStatementBalance: 1000,
+          autoPayFromChecking: true,
+          extraPayments: [],
+        },
+        {
+          id: "cc-amazon",
+          name: "Amazon",
+          statementCloseDay: 1,
+          paymentDueDay: 26, // Nov 26, 2026 is Thanksgiving
+          currentStatementBalance: 400,
+          autoPayFromChecking: true,
+          extraPayments: [],
+        },
+      ],
+      autoDeposits: [
+        {
+          id: "ad-vet",
+          name: "Mid-Month Savings",
+          defaultAmount: 200,
+          scheduleType: "monthly",
+          dayOfMonth: 11, // Nov 11, 2026 is Veterans Day
+          overrides: {},
+          active: true,
+        },
+        {
+          id: "ad-biweekly",
+          name: "Emergency Fund",
+          defaultAmount: 250,
+          scheduleType: "biweekly",
+          anchorDate: "2026-09-03", // Hits Nov 12 (Thu) and Nov 26 (Thanksgiving Thu)
+          overrides: {},
+          active: true,
+        },
+      ],
+    };
+
+    const summary = calculateDailyForecast(novConfig, 2026, 11, "2026-11-05");
+
+    // Sunday Nov 8 should have no Bilt autopay; Monday Nov 9 should have it
+    expect(summary.days[7].outflows.some((o) => o.category === "credit_card_autopay")).toBe(false);
+    expect(
+      summary.days[8].outflows.some(
+        (o) => o.category === "credit_card_autopay" && o.name === "Bilt Statement Autopay",
+      ),
+    ).toBe(true);
+
+    // Wednesday Nov 11 (Veterans Day) should have neither Alex Paycheck nor Mid-Month Savings; Thursday Nov 12 should have both
+    expect(summary.days[10].inflows.some((i) => i.name === "Alex Paycheck")).toBe(false);
+    expect(summary.days[11].inflows.some((i) => i.name === "Alex Paycheck")).toBe(true);
+    expect(summary.days[10].outflows.some((o) => o.name === "Mid-Month Savings")).toBe(false);
+    expect(summary.days[11].outflows.some((o) => o.name === "Mid-Month Savings")).toBe(true);
+
+    // Thursday Nov 26 (Thanksgiving) should have neither Amazon autopay nor Emergency Fund auto-deposit
+    expect(summary.days[25].outflows.length).toBe(0);
+    // Friday Nov 27 should have both Amazon autopay and Emergency Fund auto-deposit
+    expect(
+      summary.days[26].outflows.some(
+        (o) => o.category === "credit_card_autopay" && o.name === "Amazon Statement Autopay",
+      ),
+    ).toBe(true);
+    expect(
+      summary.days[26].outflows.some(
+        (o) => o.category === "auto_deposit" && o.name === "Emergency Fund",
       ),
     ).toBe(true);
   });

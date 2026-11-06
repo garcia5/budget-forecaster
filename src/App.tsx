@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import type { BudgetConfig, AccountTransaction, CreditCardExtraPayment } from "./types/budget";
 import { loadBudgetConfig, saveBudgetConfig, loadBudgetConfigFromDisk } from "./utils/storage";
-import { calculateDailyForecast } from "./utils/forecaster";
+import { calculateDailyForecast, getNextBusinessDay } from "./utils/forecaster";
 import { Header } from "./components/Header";
 import { DailyBalanceChart } from "./components/DailyBalanceChart";
 import { CalendarView } from "./components/CalendarView";
@@ -111,6 +111,11 @@ export function App() {
             (override.skipped === false && override.overrideAmount === undefined)
           ) {
             delete newOverrides[key];
+            for (const existingKey of Object.keys(newOverrides)) {
+              if (existingKey.length === 10 && getNextBusinessDay(existingKey) === key) {
+                delete newOverrides[existingKey];
+              }
+            }
           } else {
             newOverrides[key] = {
               ...(newOverrides[key] || {}),

@@ -50,6 +50,116 @@ export function getDayDifference(dateStr1: string, dateStr2: string): number {
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }
 
+export function isBankHoliday(year: number, month: number, day: number): boolean {
+  const dateObj = new Date(year, month - 1, day);
+  const dayOfWeek = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 4 = Thu, ..., 6 = Sat
+
+  // Fixed-date US Federal Reserve holidays (if falling on Sunday, observed the following Monday)
+  const fixedHolidays = [
+    { m: 1, d: 1 }, // New Year's Day
+    { m: 6, d: 19 }, // Juneteenth National Independence Day
+    { m: 7, d: 4 }, // Independence Day
+    { m: 11, d: 11 }, // Veterans Day
+    { m: 12, d: 25 }, // Christmas Day
+  ];
+
+  for (const h of fixedHolidays) {
+    if (month === h.m && day === h.d) {
+      return true;
+    }
+    if (month === h.m && day === h.d + 1 && dayOfWeek === 1) {
+      return true;
+    }
+  }
+
+  // Floating Monday holidays
+  if (dayOfWeek === 1) {
+    // Birthday of Martin Luther King, Jr. (3rd Monday in January)
+    if (month === 1 && day >= 15 && day <= 21) return true;
+    // Washington's Birthday / Presidents' Day (3rd Monday in February)
+    if (month === 2 && day >= 15 && day <= 21) return true;
+    // Memorial Day (Last Monday in May)
+    if (month === 5 && day >= 25 && day <= 31) return true;
+    // Labor Day (1st Monday in September)
+    if (month === 9 && day >= 1 && day <= 7) return true;
+    // Columbus Day / Indigenous Peoples' Day (2nd Monday in October)
+    if (month === 10 && day >= 8 && day <= 14) return true;
+  }
+
+  // Thanksgiving Day (4th Thursday in November)
+  if (month === 11 && dayOfWeek === 4 && day >= 22 && day <= 28) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isBusinessDay(year: number, month: number, day: number): boolean {
+  const dateObj = new Date(year, month - 1, day);
+  const dayOfWeek = dateObj.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+  if (isBankHoliday(year, month, day)) return false;
+  return true;
+}
+
+export function getNextBusinessDay(dateStr: string): string {
+  const { year, month, day } = parseDateString(dateStr);
+  const cur = new Date(year, month - 1, day);
+  while (!isBusinessDay(cur.getFullYear(), cur.getMonth() + 1, cur.getDate())) {
+    cur.setDate(cur.getDate() + 1);
+  }
+  return formatDate(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+}
+
+interface NominalDateInfo {
+  year: number;
+  month: number;
+  day: number;
+  dateStr: string;
+  daysInMonth: number;
+}
+
+export function getNominalDatesForBusinessDay(
+  year: number,
+  month: number,
+  day: number,
+): NominalDateInfo[] {
+  if (!isBusinessDay(year, month, day)) {
+    return [];
+  }
+
+  const dates: NominalDateInfo[] = [
+    {
+      year,
+      month,
+      day,
+      dateStr: formatDate(year, month, day),
+      daysInMonth: getDaysInMonth(year, month),
+    },
+  ];
+
+  const cur = new Date(year, month - 1, day);
+  while (true) {
+    cur.setDate(cur.getDate() - 1);
+    const y = cur.getFullYear();
+    const m = cur.getMonth() + 1;
+    const d = cur.getDate();
+    if (!isBusinessDay(y, m, d)) {
+      dates.unshift({
+        year: y,
+        month: m,
+        day: d,
+        dateStr: formatDate(y, m, d),
+        daysInMonth: getDaysInMonth(y, m),
+      });
+    } else {
+      break;
+    }
+  }
+
+  return dates;
+}
+
 export function isIncomeScheduled(
   income: IncomeSource,
   dateStr: string,
@@ -114,18 +224,22 @@ export function calculateDailyForecast(
 
     const inflows: ForecastTransaction[] = [];
     const outflows: ForecastTransaction[] = [];
+    const nominalDatesForBusinessDay = getNominalDatesForBusinessDay(year, month, day);
 
-    // 1. Incomes
-    let hasIncomeOnDay = false;
+    // 1. Incomes (shifted to next business day if weekend or holiday)
     for (const inc of incomes) {
-      if (isIncomeScheduled(inc, dateStr, day, daysInCurrentMonth)) {
-        hasIncomeOnDay = true;
-        inflows.push({
-          id: `inc-${inc.id}-${dateStr}`,
-          name: inc.name,
-          amount: inc.amount,
-          category: "income",
-        });
+      for (const nom of nominalDatesForBusinessDay) {
+        if (isIncomeScheduled(inc, nom.dateStr, nom.day, nom.daysInMonth)) {
+          inflows.push({
+            id: `inc-${inc.id}-${nom.dateStr}`,
+            name: inc.name,
+            amount: inc.amount,
+            category: "income",
+            meta: {
+              scheduledDate: nom.dateStr,
+            },
+          });
+        }
       }
     }
 
@@ -162,101 +276,114 @@ export function calculateDailyForecast(
         }
       }
 
-      // Autopay on statement payment due day
+      // Autopay on statement payment due day (shifted to next business day if weekend or holiday)
       if (card.autoPayFromChecking) {
-        const effectiveDueDay = Math.min(card.paymentDueDay, daysInCurrentMonth);
-        if (day === effectiveDueDay) {
-          let payAmount = card.currentStatementBalance;
+        for (const nom of nominalDatesForBusinessDay) {
+          const effectiveDueDay = Math.min(card.paymentDueDay, nom.daysInMonth);
+          if (nom.day === effectiveDueDay) {
+            let payAmount = card.currentStatementBalance;
 
-          // Extra paydowns that reduce statement autopay
-          const qualifyingExtraPayments = (card.extraPayments || []).filter((p) => {
-            if (!p.reducesStatementAutopay) return false;
-            const pDate = new Date(p.date + "T00:00:00");
-            const dueDate = new Date(year, month - 1, effectiveDueDay);
-            const diffDays = (dueDate.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24);
-            return diffDays >= 0 && diffDays <= 31;
-          });
-          const totalReduced = qualifyingExtraPayments.reduce((sum, p) => sum + p.amount, 0);
-
-          // Card transactions in this cycle that roll into statement autopay
-          const qualifyingCardTransactions = transactions.filter((tx) => {
-            if (tx.accountType !== "credit_card" || tx.cardId !== card.id) return false;
-            const tDate = new Date(tx.date + "T00:00:00");
-            const dueDate = new Date(year, month - 1, effectiveDueDay);
-            const diffDays = (dueDate.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24);
-            return diffDays >= 0 && diffDays <= 31;
-          });
-          const cardCharges = qualifyingCardTransactions
-            .filter((tx) => tx.type === "outflow")
-            .reduce((sum, tx) => sum + tx.amount, 0);
-          const cardRefunds = qualifyingCardTransactions
-            .filter((tx) => tx.type === "inflow")
-            .reduce((sum, tx) => sum + tx.amount, 0);
-          const netCardSpend = cardCharges - cardRefunds;
-
-          payAmount = Math.max(0, payAmount + netCardSpend - totalReduced);
-
-          if (payAmount > 0) {
-            outflows.push({
-              id: `cc-autopay-${card.id}-${dateStr}`,
-              name: `${card.name} Statement Autopay`,
-              amount: payAmount,
-              category: "credit_card_autopay",
-              meta: {
-                cardId: card.id,
-                cardName: card.name,
-                originalStatementBalance: card.currentStatementBalance,
-                cardChargesAdded: netCardSpend,
-                reducedBy: totalReduced,
-              },
+            // Extra paydowns that reduce statement autopay
+            const qualifyingExtraPayments = (card.extraPayments || []).filter((p) => {
+              if (!p.reducesStatementAutopay) return false;
+              const pDate = new Date(p.date + "T00:00:00");
+              const dueDate = new Date(nom.year, nom.month - 1, effectiveDueDay);
+              const diffDays = (dueDate.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24);
+              return diffDays >= 0 && diffDays <= 31;
             });
+            const totalReduced = qualifyingExtraPayments.reduce((sum, p) => sum + p.amount, 0);
+
+            // Card transactions in this cycle that roll into statement autopay
+            const qualifyingCardTransactions = transactions.filter((tx) => {
+              if (tx.accountType !== "credit_card" || tx.cardId !== card.id) return false;
+              const tDate = new Date(tx.date + "T00:00:00");
+              const dueDate = new Date(nom.year, nom.month - 1, effectiveDueDay);
+              const diffDays = (dueDate.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24);
+              return diffDays >= 0 && diffDays <= 31;
+            });
+            const cardCharges = qualifyingCardTransactions
+              .filter((tx) => tx.type === "outflow")
+              .reduce((sum, tx) => sum + tx.amount, 0);
+            const cardRefunds = qualifyingCardTransactions
+              .filter((tx) => tx.type === "inflow")
+              .reduce((sum, tx) => sum + tx.amount, 0);
+            const netCardSpend = cardCharges - cardRefunds;
+
+            payAmount = Math.max(0, payAmount + netCardSpend - totalReduced);
+
+            if (payAmount > 0) {
+              outflows.push({
+                id: `cc-autopay-${card.id}-${nom.dateStr}`,
+                name: `${card.name} Statement Autopay`,
+                amount: payAmount,
+                category: "credit_card_autopay",
+                meta: {
+                  cardId: card.id,
+                  cardName: card.name,
+                  originalStatementBalance: card.currentStatementBalance,
+                  cardChargesAdded: netCardSpend,
+                  reducedBy: totalReduced,
+                  scheduledDate: nom.dateStr,
+                },
+              });
+            }
           }
         }
       }
     }
 
-    // 4. Auto-Deposits
+    // 4. Auto-Deposits (shifted to next business day if weekend or holiday)
     for (const ad of autoDeposits) {
       if (!ad.active) continue;
 
-      let triggers = false;
-      if (ad.scheduleType === "monthly") {
-        const targetDay = ad.dayOfMonth ?? 1;
-        const effectiveDay = Math.min(targetDay, daysInCurrentMonth);
-        triggers = day === effectiveDay;
-      } else if (ad.scheduleType === "semi-monthly") {
-        const days = ad.daysOfMonth || [15, -1];
-        triggers = days.some((d) => {
-          if (d === -1) return day === daysInCurrentMonth;
-          if (d < 0) return day === daysInCurrentMonth + d + 1;
-          return day === d;
-        });
-      } else if (ad.scheduleType === "biweekly") {
-        if (ad.anchorDate) {
-          const diff = getDayDifference(dateStr, ad.anchorDate);
-          triggers = ((diff % 14) + 14) % 14 === 0;
+      for (const nom of nominalDatesForBusinessDay) {
+        let triggers = false;
+        if (ad.scheduleType === "monthly") {
+          const targetDay = ad.dayOfMonth ?? 1;
+          const effectiveDay = Math.min(targetDay, nom.daysInMonth);
+          triggers = nom.day === effectiveDay;
+        } else if (ad.scheduleType === "semi-monthly") {
+          const days = ad.daysOfMonth || [15, -1];
+          triggers = days.some((d) => {
+            if (d === -1) return nom.day === nom.daysInMonth;
+            if (d < 0) return nom.day === nom.daysInMonth + d + 1;
+            return nom.day === d;
+          });
+        } else if (ad.scheduleType === "biweekly") {
+          if (ad.anchorDate) {
+            const diff = getDayDifference(nom.dateStr, ad.anchorDate);
+            triggers = ((diff % 14) + 14) % 14 === 0;
+          }
+        } else if (ad.scheduleType === "per-paycheck") {
+          triggers = incomes.some((inc) =>
+            isIncomeScheduled(inc, nom.dateStr, nom.day, nom.daysInMonth),
+          );
         }
-      } else if (ad.scheduleType === "per-paycheck") {
-        triggers = hasIncomeOnDay;
-      }
 
-      if (triggers) {
-        const override = ad.overrides[dateStr] || ad.overrides[monthKey];
-        const isSkipped = override?.skipped === true;
-        const amount = isSkipped ? 0 : (override?.overrideAmount ?? ad.defaultAmount);
+        if (triggers) {
+          const nomMonthKey = `${nom.year}-${String(nom.month).padStart(2, "0")}`;
+          const override =
+            ad.overrides[dateStr] ||
+            ad.overrides[nom.dateStr] ||
+            ad.overrides[nomMonthKey] ||
+            ad.overrides[monthKey];
+          const isSkipped = override?.skipped === true;
+          const amount = isSkipped ? 0 : (override?.overrideAmount ?? ad.defaultAmount);
 
-        outflows.push({
-          id: `ad-${ad.id}-${dateStr}`,
-          name: ad.name,
-          amount,
-          category: "auto_deposit",
-          isSkipped,
-          meta: {
-            depositId: ad.id,
-            defaultAmount: ad.defaultAmount,
-            isOverridden: override?.overrideAmount !== undefined,
-          },
-        });
+          outflows.push({
+            id: `ad-${ad.id}-${nom.dateStr}`,
+            name: ad.name,
+            amount,
+            category: "auto_deposit",
+            isSkipped,
+            meta: {
+              depositId: ad.id,
+              defaultAmount: ad.defaultAmount,
+              isOverridden: override?.overrideAmount !== undefined,
+              scheduledDate: nom.dateStr,
+            },
+          });
+        }
       }
     }
 

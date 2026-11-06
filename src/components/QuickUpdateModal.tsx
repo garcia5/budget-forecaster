@@ -33,7 +33,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
       id: c.id,
       name: c.name,
       statementBalance: c.currentStatementBalance,
-      statementDate: c.statementDate || "",
+      paymentDueDay: c.paymentDueDay,
     })),
   );
 
@@ -61,7 +61,7 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
         return {
           ...c,
           currentStatementBalance: Number(match.statementBalance),
-          statementDate: match.statementDate,
+          paymentDueDay: Math.min(31, Math.max(1, Number(match.paymentDueDay) || 1)),
         };
       }
       return c;
@@ -223,40 +223,52 @@ export const QuickUpdateModal: React.FC<QuickUpdateModalProps> = ({
                           {card.name}
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5">
-                          Due day: {config.creditCards.find((c) => c.id === card.id)?.paymentDueDay}
-                          th of month
+                          Autopay on day {card.paymentDueDay || 1} of month
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="relative w-32">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">
-                            $
-                          </span>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            Statement Balance
+                          </label>
+                          <div className="relative w-32">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">
+                              $
+                            </span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={card.statementBalance}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                const updated = [...cardsState];
+                                updated[idx].statementBalance = val;
+                                setCardsState(updated);
+                              }}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-white font-medium text-sm focus:outline-none focus:border-emerald-500 text-right"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            Autopay Day
+                          </label>
                           <input
                             type="number"
-                            step="0.01"
-                            value={card.statementBalance}
+                            min="1"
+                            max="31"
+                            value={card.paymentDueDay || ""}
                             onChange={(e) => {
-                              const val = parseFloat(e.target.value) || 0;
+                              const val = parseInt(e.target.value, 10) || 0;
                               const updated = [...cardsState];
-                              updated[idx].statementBalance = val;
+                              updated[idx].paymentDueDay = val ? Math.min(31, Math.max(1, val)) : 0;
                               setCardsState(updated);
                             }}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-white font-medium text-sm focus:outline-none focus:border-emerald-500 text-right"
+                            title="Day of the month autopay comes out (1-31)"
+                            className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-medium text-sm focus:outline-none focus:border-emerald-500 text-center"
                           />
                         </div>
-                        <input
-                          type="date"
-                          value={card.statementDate}
-                          onChange={(e) => {
-                            const updated = [...cardsState];
-                            updated[idx].statementDate = e.target.value;
-                            setCardsState(updated);
-                          }}
-                          title="Statement Closing Date"
-                          className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-300 text-xs focus:outline-none focus:border-emerald-500"
-                        />
                       </div>
                     </div>
                   ))}
